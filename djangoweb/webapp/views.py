@@ -22,12 +22,30 @@ def dashboard(request):
 def searchchannel(request):
     if request.method == 'POST':
         chnl = ChannelInfo()
-        chnl.channelID = request.POST['channelID']
+        chnl.channel_name = request.POST['channel_name']
         # API 키를 입력하세요.
         API_KEY = 'AIzaSyCcis4wzheGUE8j9hRQ9xp43w7LREedD6M'
 
         # YouTube API 클라이언트를 빌드합니다.
         youtube = build('youtube', 'v3', developerKey=API_KEY)
+
+        # search API 요청 보내기
+        search_response = youtube.search().list(
+            q = chnl.channel_name,
+            type="channel",
+            part="id",
+            maxResults=50  # 한 번에 최대 50개의 결과 가져오기
+        ).execute()
+
+        chnl.channelID = search_response['items'][0]['id']['channelId']
+        # search API 요청 보내기
+        search_response = youtube.search().list(
+            channelId=chnl.channelID,
+            type="video",
+            part="id",
+            maxResults=50  # 한 번에 최대 50개의 결과 가져오기
+        ).execute()
+        
         # 채널 통계를 가져옵니다.
         channels_response = youtube.channels().list(
             part='snippet,contentDetails,statistics',
@@ -51,3 +69,6 @@ def searchchannel(request):
 # def viewchannel(request):
 #     if request.method =='GET':
 #         return render(request, 'dashboard', {'channel'})
+
+
+
