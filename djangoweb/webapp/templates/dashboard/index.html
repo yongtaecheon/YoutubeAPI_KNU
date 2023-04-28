@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 {% load static %}
+{% load socialaccount %}
+{% providers_media_js %}
+
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -132,7 +135,7 @@
       />
       <div class="navbar-nav">
         <div class="nav-item text-nowrap">
-          <a class="nav-link px-3" href="#">Sign out</a>
+          <a class="nav-link px-3" href="{%provider_login_url 'google'%}">Sign in</a>
         </div>
       </div>
     </header>
