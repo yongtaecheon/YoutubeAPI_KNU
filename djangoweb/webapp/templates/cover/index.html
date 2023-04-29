@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 {%load static %}
+{% load socialaccount %}
+{% providers_media_js %}
 <html lang="en" class="h-100">
   <head>
     <meta charset="utf-8" />
@@ -96,6 +98,7 @@
     <link href="{% static 'css/cover.css' %}" rel="stylesheet" />
   </head>
   <body class="d-flex h-100 text-center text-bg-dark">
+    
     <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
       <header class="mb-auto">
         <div>
@@ -105,11 +108,19 @@
               class="nav-link fw-bold py-1 px-0 active"
               aria-current="page"
               href="#"
-              >Home</a
-            >
+              >Home</a>
             <a class="nav-link fw-bold py-1 px-0" href="#">Features</a>
             <a class="nav-link fw-bold py-1 px-0" href="#">Contact</a>
-          </nav>
+          <nav/>
+          <div class="justify-content-end">
+            {% if user.is_authenticated %}
+            <strong>{{user.username}}님 반갑습니다.</strong>
+            <a href="/accounts/logout">로그아웃</a>
+            {% else %}
+            <a class="nav-link fw-bold py-1 px-0" href="/login">Sign in</a>
+            <a href="/accounts/signup">회원가입</a>
+            {% endif %}
+          </div>
         </div>
       </header>
 

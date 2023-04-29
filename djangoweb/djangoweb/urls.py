@@ -23,6 +23,6 @@ urlpatterns = [
     path('jumbotron/', webapp.views.jumbotron),
     path('dashboard/',webapp.views.dashboard),
     path('searchchannel/', webapp.views.searchchannel, name='searchchannel'),
-    path('', webapp.views.dashboard, name='login'),
+    path('login/', webapp.views.login, name='login'),
     path('accounts/', include('allauth.urls')),
     ]

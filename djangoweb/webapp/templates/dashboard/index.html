@@ -135,7 +135,13 @@
       />
       <div class="navbar-nav">
         <div class="nav-item text-nowrap">
-          <a class="nav-link px-3" href="{%provider_login_url 'google'%}">Sign in</a>
+          {% if user.is_authenticated %}
+            <strong style="color:white">{{user.username}}님 반갑습니다.</strong>
+            <a href="/accounts/logout">로그아웃</a>
+            {% else %}
+            <a class="nav-link fw-bold py-1 px-0" href="/login">Sign in</a>
+            <a href="/accounts/signup">회원가입</a>
+            {% endif %}
         </div>
       </div>
     </header>

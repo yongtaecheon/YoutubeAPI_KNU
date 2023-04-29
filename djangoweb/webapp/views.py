@@ -9,6 +9,7 @@ import json
 from datetime import datetime
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from google.oauth2.credentials import Credentials
 
 # Create your views here.
 def home(request):
@@ -20,6 +21,32 @@ def jumbotron(request):
 def dashboard(request):
     return render(request, 'dashboard/index.html')
 
+def login(request):
+    return render(request, "login/index.html")
+
+def get_authenticated_service(request):
+    credentials = Credentials.from_authorized_user_info(
+        request.session['google_auth_token'])
+    youtube_analytics_service = build('youtubeAnalytics', 'v2', credentials=credentials)
+    return youtube_analytics_service
+
+def get_channel_views(request):
+    try:
+        youtube_analytics_service = get_authenticated_service(request)
+        channel_response = youtube_analytics_service.reports().query(
+            ids='channel==CHANNEL_ID',
+            metrics='views',
+            start_date='2022-01-01',
+            end_date='2022-01-31',
+            dimensions='day'
+        ).execute()
+
+        return channel_response
+
+    except HttpError as error:
+        print(f'An error occurred: {error}')
+        return None
+    
 def searchchannel(request):
     if request.method == 'POST':
         chnl = ChannelInfo()
