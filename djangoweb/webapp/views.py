@@ -150,7 +150,7 @@ def youtube_social_login(request):
     return render(request, 'login/index.html')
 
 
-def makeTrendList(request):
+def makeTrendList():
     #TrendList.objects.all().delete()
     # API 인증 정보를 설정합니다.
 
@@ -182,8 +182,7 @@ def makeTrendList(request):
         tl.url = f'https://www.youtube.com/watch?v={tl.video_id}'
         tl.LoadDate = now.strftime('%Y%m%d')
         tl.save()
-
-    return render(request, 'trendList/index.html')
+    return
 
 
 def showTrendList(request, param):
@@ -202,74 +201,79 @@ def objectcreation():
     return object
 
 
-def categoryPopChannel(request):
-    if request.method == 'POST':
-        now = datetime.now()
-        youtube = build('youtube', 'v3', developerKey=API_KEY3)
-        pop_chnllist = []
-        pop_chnl = PopularChannelInfo()
+def makecategoryPopChannel():
+    now = datetime.now()
+    youtube = build('youtube', 'v3', developerKey=API_KEY3)
+    pop_chnllist = []
+    pop_chnl = PopularChannelInfo()
 
-        categories = youtube.videoCategories().list(
-            part='snippet', regionCode='KR').execute()
-        for case in categories['items']:
-            print("카테고리 : ", case['snippet']['title'])
+    categories = youtube.videoCategories().list(
+        part='snippet', regionCode='KR').execute()
+    for case in categories['items']:
+        print("카테고리 : ", case['snippet']['title'])
 
-        for category in categories['items']:
+    for category in categories['items']:
 
-            category_id = category['id']
-            category_name = category['snippet']['title']
+        category_id = category['id']
+        category_name = category['snippet']['title']
 
-            if (category['snippet']['assignable'] == False):
+        if (category['snippet']['assignable'] == False):
+            continue
+        try:
+            search_response = youtube.videos().list(
+                chart='mostPopular',
+                part='snippet',
+                videoCategoryId=category_id,
+                maxResults=10,
+                regionCode='KR'
+            ).execute()
+
+        except HttpError as error:
+            if (error.resp.status == 404):
                 continue
-            try:
-                search_response = youtube.videos().list(
-                    chart='mostPopular',
-                    part='snippet',
-                    videoCategoryId=category_id,
-                    maxResults=1,
-                    regionCode='KR'
-                ).execute()
+            else:
+                print("error occurred", error)
 
-            except HttpError as error:
-                if (error.resp.status == 404):
-                    continue
-                else:
-                    print("error occurred", error)
+        print("카테고리", category_name)
+        print(" ")
+        for video in search_response['items']:
+            channel_id = video['snippet']['channelId']
+            channel_response = youtube.channels().list(
+                part='snippet,statistics',
+                id=channel_id
+            ).execute()
+            pop_chnllist.append(objectcreation())
+            for channel in channel_response['items']:
 
-            print("카테고리", category_name)
-            print(" ")
-            for video in search_response['items']:
-                channel_id = video['snippet']['channelId']
-                channel_response = youtube.channels().list(
-                    part='snippet,statistics',
-                    id=channel_id
-                ).execute()
-                pop_chnllist.append(objectcreation())
-                for channel in channel_response['items']:
+                channel_title = channel['snippet']['title']
+                channel_description = channel['snippet']['description']
+                channel_thumbnail = channel['snippet']['thumbnails']['high']['url']
+                channel_viewCount = channel['statistics']['viewCount']
+                if (~channel['statistics']['hiddenSubscriberCount']):
+                    channel_subscribe = channel['statistics']['subscriberCount']
+                    pop_chnllist[-1].subscribers = channel_subscribe
+                pop_chnllist[-1].channelID = channel_id
+                pop_chnllist[-1].channel_views = channel_viewCount
+                pop_chnllist[-1].channel_category = category_name
+                pop_chnllist[-1].channel_name = channel_title
+                pop_chnllist[-1].channel_thumbnail = channel_thumbnail
+                pop_chnllist[-1].LoadDate = now.strftime('%Y%m%d')
+                pop_chnllist[-1].save()
 
-                    channel_title = channel['snippet']['title']
-                    channel_description = channel['snippet']['description']
-                    channel_thumbnail = channel['snippet']['thumbnails']['high']['url']
-                    channel_viewCount = channel['statistics']['viewCount']
-                    if (~channel['statistics']['hiddenSubscriberCount']):
-                        channel_subscribe = channel['statistics']['subscriberCount']
-                        pop_chnllist[-1].subscribers = channel_subscribe
-                    pop_chnllist[-1].channelID = channel_id
-                    pop_chnllist[-1].channel_views = channel_viewCount
-                    pop_chnllist[-1].channel_category = category_name
-                    pop_chnllist[-1].channel_name = channel_title
-                    pop_chnllist[-1].channel_thumbnail = channel_thumbnail
-                    pop_chnllist[-1].LoadDate = now.strftime('%Y%m%d')
-                    pop_chnllist[-1].save()
+                # pop_chnllist.append(pop_chnl)
 
-                    # pop_chnllist.append(pop_chnl)
+                print("     채널 이름:", pop_chnl.channel_name)
+    # for pop_chnl_item in pop_chnllist:
+    #    pop_chnl_item.save()
 
-                    print("     채널 이름:", pop_chnl.channel_name)
-        # for pop_chnl_item in pop_chnllist:
-        #    pop_chnl_item.save()
+    return 
 
-    return render(request, 'category/index.html', context={'pop_chnlist': pop_chnllist})
+def showCategoryPopChannel(request):
+    pop_chnllist = PopularChannelInfo.objects.all()
+    return render(request, 'category/index.html', context={'pop_chnllist': pop_chnllist})
 
-# def viewchannel(request):
-#     if request.method =='GET':
-#         return render(request, 'dashboard', {'channel'})
+
+def updateDB(request):
+    makeTrendList()
+    makecategoryPopChannel()
+    return render(request, 'update/index.html')
