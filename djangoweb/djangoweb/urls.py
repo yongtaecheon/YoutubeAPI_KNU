@@ -25,7 +25,7 @@ urlpatterns = [
     path('searchchannel/', webapp.views.searchchannel, name='searchchannel'),
     path('youtubesociallogin/',webapp.views.youtube_social_login, name='youtubesociallogin'),
     path('accounts/', include('allauth.urls')),
-    path('makeTrendList/', webapp.views.makeTrendList, name='makeTrendList'),
+    path('updateDB/', webapp.views.updateDB, name='updateDB'),
     path('showTrendList/<int:param>/',webapp.views.showTrendList, name='showTrendList'),
-    path('categoryPopChannel',webapp.views.categoryPopChannel, name='categoryPopChannel')
+    path('showCategoryPopChannel/',webapp.views.showCategoryPopChannel, name='showCategoryPopChannel')
     ]
