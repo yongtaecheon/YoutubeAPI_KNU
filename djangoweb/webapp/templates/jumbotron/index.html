@@ -156,20 +156,14 @@
                 utility to mix up the jumbotron look. Then, mix and match with
                 additional component themes and more.
               </p>
-              <button
-                class="btn btn-outline-light"
-                onclick="location.href='/dashboard';"
-              >
-                See Analysis
-              </button>
               <form action="{% url 'categoryPopChannel' %}" method="POST">
-          {% csrf_token %}
-          <button
-            class="btn btn-outline-secondary"
-            type="submit"
-            id="button-addon2">카테고리
-          </button>
-        </form>
+                {% csrf_token %}
+                <button
+                  class="btn btn-outline-light"
+                  type="submit"
+                  id="button-addon2">카테고리
+                </button>
+              </form>
             </div>
           </div>
           <div class="col-md-6">
@@ -181,9 +175,16 @@
                 at the source HTML here as we've adjusted the alignment and
                 sizing of both column's content for equal-height.
               </p>
-              <button class="btn btn-outline-secondary" type="button">
-                Example button
-              </button>
+              <form action="{% url 'makeTrendList' %}" method="POST">
+                <button class="btn btn-outline-secondary" type="button">
+                  트렌트 리스트 불러오기
+                </button>
+              </form>
+              {% comment %} <form action="{% url 'showTrendList' %}" method="POST">
+                <button class="btn btn-outline-secondary" type="button">
+                  트렌드 리스트 보기
+                </button>
+              </form> {% endcomment %}
             </div>
           </div>
         </div>

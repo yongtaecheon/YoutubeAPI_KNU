@@ -2,6 +2,7 @@ from django.db import models
 # Create your models here.
 
 class ChannelInfo(models.Model):
+    LoadDate = models.CharField(null=True, default='', max_length=100)
     channelID = models.CharField(max_length=100)
     channel_name = models.CharField(null=True,default='',max_length=100)
     views = models.BigIntegerField(null=True,default=0)
@@ -21,13 +22,15 @@ class ChannelInfo(models.Model):
 
 
 class TrendList(models.Model):
+    LoadDate = models.CharField(null=True, default='', max_length=100)
     title = models.CharField(max_length=100)
     channel_title = models.CharField(null=True, default='', max_length=100)
     views = models.BigIntegerField(null=True, default=0)
     video_id = models.CharField(max_length=100)
     url = models.CharField(max_length=200)
-
+    
 class PopularChannelInfo(models.Model):
+    LoadDate = models.CharField(null=True, default='', max_length=100)
     channel_category = models.CharField(default='',max_length=100)
     channelID = models.CharField(default='',max_length=100)
     channel_name = models.CharField(null=True,default='',max_length=100)

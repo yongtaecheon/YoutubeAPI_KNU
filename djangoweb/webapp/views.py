@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect
 from .models import ChannelInfo, PopularChannelInfo, TrendList
 
 import os
-import datetime
 import re
 import pandas as pd
 import json
@@ -12,6 +11,12 @@ from googleapiclient.errors import HttpError
 
 # Create your views here.
 
+# API 키를 입력
+API_KEY1 = 'AIzaSyCcis4wzheGUE8j9hRQ9xp43w7LREedD6M'
+API_KEY2 = 'AIzaSyCybUkLvjkdaWFgdc7GtVdnn-vgal0g0mg'
+API_KEY3 = 'AIzaSyD1mS8iqeHOniuebnom3cFT_yVG1VI1odA'
+API_KEY4 = 'AIzaSyA2-DRryTN0JYnI3P-letj_bl-sj9wpVKw'
+API_KEY5 = 'AIzaSyB5nnPCXwDu3BWpCQxcrpa8mdJYqBZANjQ'
 
 def home(request):
     return render(request, 'cover/index.html')
@@ -29,10 +34,6 @@ def searchchannel(request):
     if request.method == 'POST':
         chnl = ChannelInfo()
         chnl.channel_name = request.POST['channel_name']
-        # API 키를 입력
-        API_KEY1 = 'AIzaSyCcis4wzheGUE8j9hRQ9xp43w7LREedD6M'
-        API_KEY2 = 'AIzaSyCybUkLvjkdaWFgdc7GtVdnn-vgal0g0mg'
-        API_KEY3 = 'AIzaSyD1mS8iqeHOniuebnom3cFT_yVG1VI1odA'
 
         # YouTube API 클라이언트를 빌드
         youtube = build('youtube', 'v3', developerKey=API_KEY1)
@@ -140,6 +141,8 @@ def searchchannel(request):
         # df = df.sort_values(by=['조회 수','좋아요 수','댓글 수'], ascending=False)
         df_html = df.to_html(decimal=',', justify='center',
                              classes='table table-striped table-sm table-hover')
+        now = datetime.now()
+        chnl.LoadDate = now.strftime('%Y%m%d')
         chnl.save()
     return render(request, 'dashboard/index.html', context={'chnl': chnl, 'df': df_html})
 
@@ -148,15 +151,15 @@ def youtube_social_login(request):
 
 
 def makeTrendList(request):
-    TrendList.objects.all().delete()
+    #TrendList.objects.all().delete()
     # API 인증 정보를 설정합니다.
-    DEVELOPER_KEY = 'AIzaSyB5nnPCXwDu3BWpCQxcrpa8mdJYqBZANjQ'
+
     YOUTUBE_API_SERVICE_NAME = 'youtube'
     YOUTUBE_API_VERSION = 'v3'
 
     # YouTube API 클라이언트를 빌드합니다.
     youtube = build(YOUTUBE_API_SERVICE_NAME,
-                    YOUTUBE_API_VERSION, developerKey=DEVELOPER_KEY)
+                    YOUTUBE_API_VERSION, developerKey=API_KEY2)
 
     # 실시간 급상승 동영상 정보를 가져오는 API 요청을 생성합니다.
     req = youtube.videos().list(
@@ -168,7 +171,8 @@ def makeTrendList(request):
 
     # API 요청을 실행하고 응답을 받아옵니다.
     response = req.execute()
-
+    now = datetime.now()
+        
     for index, item in enumerate(response['items']):
         tl = TrendList()
         tl.title = item['snippet']['title']
@@ -176,6 +180,7 @@ def makeTrendList(request):
         tl.views = item['statistics']['viewCount']
         tl.video_id = item['id']
         tl.url = f'https://www.youtube.com/watch?v={tl.video_id}'
+        tl.LoadDate = now.strftime('%Y%m%d')
         tl.save()
 
     return render(request, 'trendList/index.html')
@@ -199,9 +204,8 @@ def objectcreation():
 
 def categoryPopChannel(request):
     if request.method == 'POST':
-        api_key = 'AIzaSyA2-DRryTN0JYnI3P-letj_bl-sj9wpVKw'
-
-        youtube = build('youtube', 'v3', developerKey=api_key)
+        now = datetime.now()
+        youtube = build('youtube', 'v3', developerKey=API_KEY3)
         pop_chnllist = []
         pop_chnl = PopularChannelInfo()
 
@@ -255,6 +259,7 @@ def categoryPopChannel(request):
                     pop_chnllist[-1].channel_category = category_name
                     pop_chnllist[-1].channel_name = channel_title
                     pop_chnllist[-1].channel_thumbnail = channel_thumbnail
+                    pop_chnllist[-1].LoadDate = now.strftime('%Y%m%d')
                     pop_chnllist[-1].save()
 
                     # pop_chnllist.append(pop_chnl)
