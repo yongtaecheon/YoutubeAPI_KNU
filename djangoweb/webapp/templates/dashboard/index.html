@@ -242,9 +242,7 @@
         </nav>
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-          <div
-            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
-          >
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h1 class="h2">채널분석 리포트</h1>
             <div class="btn-toolbar mb-2 mb-md-0">
               <div class="btn-group me-2">
@@ -264,36 +262,45 @@
               </button>
             </div>
           </div>
-            {%if chnl %}
-            <div class="container text-center">
-              <div class="col row-cols-1">
-                <div class="row">
-                  <div class="col">
-                    <div class="h2">채널 명:</div>
-                  </div>
-                  <div class="col">
-                    <div class="h2">{{chnl.channel_name}}</div>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">구독자 수</div>
-                  <div class="col">{{chnl.subscribers}}명</div>
-                <div class="row">
-                  <div class="col">총 조회수</div>
-                  <div class="col">{{chnl.views}}회</div>
-                <div class="row">
-                  <div class="col">총 비디오 수</div>
-                  <div class="col">{{chnl.videos}}개</div>
-                <div class="row">
-                  <div class="col">예상 수익</div>
-                  <div class="col">{{chnl.revenue}}$</div>
-                </div>
-              </div>
-              {%endif%}
-          <h2>채널 비디오 정보</h2>
-          <div class="table-responsive">
-            {{df|safe}}
+          {%if chnl %}
+          <div class="p-3 mb-4 bg-light border rounded-3" align="center">
+            <div class="container-fluid">
+              <img src="{{chnl.channel_img}}" width="240" />
+              <h1>{{chnl.channel_name}}</h1>
+              <p>
+                <a href="https://www.youtube.com/channel/{{chnl.channelID}}" class="link-secondary link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Go to Channel</a>
+              </p>
+            </div>
           </div>
+          <div class="row align-items-md-stretch">
+            <div class="col-md-3">
+              <div class="h-60 p-4 text-bg-dark rounded-3">        
+                <p>구독자 수</p>
+                <h2>{{chnl.subscribers}}</h2>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="h-60 p-4 text-bg-dark rounded-3">
+                <p>총 조회수</p>
+                <h2>{{chnl.views}}</h2>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="h-60 p-4 text-bg-dark rounded-3">
+                <p>총 비디오 수</p>
+                <h2>{{chnl.videos}}</h2>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="h-60 p-4 text-bg-success rounded-3">
+                <p>예상수익</p>
+                <h2>{{chnl.revenue}}$</h2>
+              </div>
+            </div>
+          </div>
+          {%endif%}
+          <h2><br>채널 비디오 정보</h2>
+          <div class="table-responsive">{{df|safe}}</div>
           <canvas
             class="my-4 w-100"
             id="myChart"
