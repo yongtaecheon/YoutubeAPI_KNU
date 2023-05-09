@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 # Create your models here.
 
 class ChannelInfo(models.Model):
@@ -17,3 +18,7 @@ class ChannelInfo(models.Model):
     video_likes = models.TextField(null=True,default='',max_length=1000)
     video_comments = models.TextField(null=True,default='',max_length=1000)
     video_date = models.TextField(null=True,default='',max_length=1000)
+    
+class CredentialsModel(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    credentials = models.TextField()

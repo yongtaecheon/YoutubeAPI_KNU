@@ -1,15 +1,117 @@
 from django.shortcuts import render, redirect
 from .models import ChannelInfo
+from django.contrib.auth.decorators import login_required
+from oauth2_provider.models import AccessToken, Application
+from datetime import datetime
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+from oauth2client.client import OAuth2Credentials
+from django.contrib.auth.models import User
+from .models import CredentialsModel
 
 import os
 import datetime
 import re
 import pandas as pd
 import json
-from datetime import datetime
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from google.oauth2.credentials import Credentials
+import google_auth_oauthlib.flow
+
+CLIENT_SECRETS_FILE = "C:/Users/dnjsr/OneDrive/Desktop/project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
+
+SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly']
+
+def my_view(request):
+    user = request.user
+    credential = CredentialsModel.objects.filter(user=user)
+    if credential:
+        credential = credential[0]
+        credentials = Credentials.from_authorized_user_info(
+            credential.to_json()
+        )
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            CLIENT_SECRETS_FILE, SCOPES
+        )
+        flow.redirect_uri = request.build_absolute_uri('/oauth2callback/')
+        authorization_url, _ = flow.authorization_url(access_type='offline')
+        request.session['oauth2_state'] = flow.state
+        return redirect(authorization_url)
+
+def oauth2callback(request):
+    state = request.session.get('oauth2_state', '')
+    flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, SCOPES, state=state)
+    flow.redirect_uri = request.build_absolute_uri('/oauth2callback/')
+    authorization_response = request.build_absolute_uri()
+    flow.fetch_token(authorization_response=authorization_response)
+    credentials = flow.credentials
+    save_credentials(request.user, credentials)
+    return redirect('my_view')
+
+def save_credentials(user, credentials):
+    credential = CredentialsModel.objects.filter(user=user)
+    if credential:
+        credential = credential[0]
+        credential.credentials = credentials.to_json()
+        credential.save()
+    else:
+        credential = CredentialsModel(
+            user=user,
+            credentials=credentials.to_json(),
+        )
+        credential.save()
+
+def get_analytics_service(credentials):
+    """
+    Creates a YouTube Analytics API client using the credentials of the authenticated user.
+    """
+    credentials = Credentials.from_authorized_user_info(json.loads(credentials))
+    service = build('youtubeAnalytics', 'v2', credentials=credentials)
+    return service
+
+def youtube_analytics(request):
+    try:
+        credential = CredentialsModel.objects.get(user=request.user)
+        service = get_analytics_service(credential.credentials)
+        # Use the YouTube Analytics API service object to make requests.
+    except CredentialsModel.DoesNotExist:
+        # Handle the case where the user does not have credentials saved.
+        pass
+
+    # YouTube 채널 ID 가져오기
+    channels = youtube_analytics.channels().list(
+        part='snippet,contentDetails,statistics',
+        mine=True
+    ).execute()
+    channel = channels['items'][0]
+    channel_id = channel['id']
+
+    # API 사용 예제: 7일 동안의 조회수 및 구독자 수 가져오기
+    today = datetime.datetime.now()
+    seven_days_ago = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+    today = today.strftime('%Y-%m-%d')
+    response = youtube_analytics.reports().query(
+        ids='channel==' + channel_id,
+        startDate=seven_days_ago,
+        endDate=today,
+        metrics='views,subscribersGained',
+        dimensions='day'
+    ).execute()
+    rows = response['rows']
+    data = []
+    for row in rows:
+        data.append({
+            'date': row[0],
+            'views': int(row[1]),
+            'subscribers_gained': int(row[2])
+        })
+
+    print(data)
+    
+    # 결과를 HTML 페이지로 렌더링합니다.
+    return render(request, 'youtube_analytics.html', {'data': data})
 
 # Create your views here.
 def home(request):
@@ -23,29 +125,6 @@ def dashboard(request):
 
 def login(request):
     return render(request, "login/index.html")
-
-def get_authenticated_service(request):
-    credentials = Credentials.from_authorized_user_info(
-        request.session['google_auth_token'])
-    youtube_analytics_service = build('youtubeAnalytics', 'v2', credentials=credentials)
-    return youtube_analytics_service
-
-def get_channel_views(request):
-    try:
-        youtube_analytics_service = get_authenticated_service(request)
-        channel_response = youtube_analytics_service.reports().query(
-            ids='channel==CHANNEL_ID',
-            metrics='views',
-            start_date='2022-01-01',
-            end_date='2022-01-31',
-            dimensions='day'
-        ).execute()
-
-        return channel_response
-
-    except HttpError as error:
-        print(f'An error occurred: {error}')
-        return None
     
 def searchchannel(request):
     if request.method == 'POST':
