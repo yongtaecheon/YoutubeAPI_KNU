@@ -27,27 +27,30 @@ import google_auth_oauthlib.flow
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-CLIENT_SECRETS_FILE = "C:/Users/dnjsr/OneDrive/Desktop/project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
-SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly']
+CLIENT_SECRETS_FILE = "C:/Users/dnjsr/Desktop/Project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
+SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
+          "https://www.googleapis.com/auth/yt-analytics.readonly"]
 API_SERVICE_NAME = 'youtubeAnalytics'
 API_VERSION = 'v2'
 
 def api_request(request):
+    #세션에 credentials 정보가 없다면 authorize로 이동하여 생성
   if 'credentials' not in request.session:
     return redirect('authorize')
 
-  # Load credentials from the session.
+  # 세션에서 credentials 정보 읽어오기
   credentials = google.oauth2.credentials.Credentials(
       **request.session['credentials'])
 
+    #유튜브 객체 생성
   youtube = googleapiclient.discovery.build(
       API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
-  report = youtube.reports().query(ids='channel==MINE', startDate='2020-05-01', endDate='2020-06-30', metrics='views').execute()
+    #api request
+  report = youtube.reports().query(ids='channel==MINE', startDate='2020-05-01', endDate='2021-06-30', metrics='views').execute()
 
-  # Save credentials back to session in case access token was refreshed.
-  # ACTION ITEM: In a production app, you likely want to save these
-  #              credentials in a persistent database instead.
+  # 세션에 credential 정보 저장
   request.session['credentials'] = credentials_to_dict(credentials)
 
   return JsonResponse(report)
@@ -56,11 +59,7 @@ def authorize(request):
       # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
   flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
       CLIENT_SECRETS_FILE, scopes=SCOPES)
-
-  # The URI created here must exactly match one of the authorized redirect URIs
-  # for the OAuth 2.0 client, which you configured in the API Console. If this
-  # value doesn't match an authorized URI, you will get a 'redirect_uri_mismatch'
-  # error.
+  
   flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
 
   authorization_url, state = flow.authorization_url(
@@ -77,7 +76,7 @@ def authorize(request):
 
 
 def oauth2callback(request):
-      # Specify the state when creating the flow in the callback so that it can
+  # Specify the state when creating the flow in the callback so that it can
   # verified in the authorization server response.
   state = request.session['state']
 
@@ -87,10 +86,7 @@ def oauth2callback(request):
   # Use the authorization server's response to fetch the OAuth 2.0 tokens.
   authorization_response = request.build_absolute_uri()
   flow.fetch_token(authorization_response=authorization_response)
-
-  # Store credentials in the session.
-  # ACTION ITEM: In a production app, you likely want to save these
-  #              credentials in a persistent database instead.
+  
   credentials = flow.credentials
   request.session['credentials'] = credentials_to_dict(credentials)
 
@@ -98,8 +94,7 @@ def oauth2callback(request):
 
 def revoke(request):
   if 'credentials' not in request.session:
-    return ('You need to <a href="/authorize">authorize</a> before ' +
-            'testing the code to revoke credentials.')
+    return render(request, "test/notAuthorize.html")
 
   credentials = google.oauth2.credentials.Credentials(
     **request.session['credentials'])
@@ -110,15 +105,14 @@ def revoke(request):
 
   status_code = getattr(revoke, 'status_code')
   if status_code == 200:
-    return('Credentials successfully revoked.' + print_index_table())
+    return render(request, 'Credentials successfully revoked.' + print_index_table())
   else:
-    return('An error occurred.' + print_index_table())
+    return render(request, 'An error occurred.' + print_index_table())
 
 def clear_credentials(request):
   if 'credentials' in request.session:
     del request.session['credentials']
-  return ('Credentials have been cleared.<br><br>' +
-          print_index_table())
+  return render(request,"test/cleared.html")
 
 def credentials_to_dict(credentials):
   return {'token': credentials.token,
