@@ -48,6 +48,8 @@ INSTALLED_APPS = [
 
     # provider
     'allauth.socialaccount.providers.google',
+
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -65,7 +67,7 @@ ROOT_URLCONF = 'djangoweb.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), os.path.join(BASE_DIR, 'templates', 'accounts')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -141,4 +143,5 @@ AUTHENTICATION_BACKENDS = (
 )
 
 SITE_ID = 1
+LOGIN_URL='/login/'
 LOGIN_REDIRECT_URL = '/'
