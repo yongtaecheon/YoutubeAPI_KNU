@@ -23,9 +23,8 @@ urlpatterns = [
     path('jumbotron/', webapp.views.jumbotron),
     path('dashboard/',webapp.views.dashboard),
     path('searchchannel/', webapp.views.searchchannel, name='searchchannel'),
-    path('youtubesociallogin/',webapp.views.youtube_social_login, name='youtubesociallogin'),
     path('accounts/', include('allauth.urls')),
     path('updateDB/', webapp.views.updateDB, name='updateDB'),
     path('showTrendList/<int:param>/',webapp.views.showTrendList, name='showTrendList'),
-    path('showCategoryPopChannel/',webapp.views.showCategoryPopChannel, name='showCategoryPopChannel')
+    path('showCategoryPopChannel/<int:param>/',webapp.views.showCategoryPopChannel, name='showCategoryPopChannel')
     ]

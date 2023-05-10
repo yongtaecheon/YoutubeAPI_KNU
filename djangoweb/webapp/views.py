@@ -146,10 +146,6 @@ def searchchannel(request):
         chnl.save()
     return render(request, 'dashboard/index.html', context={'chnl': chnl, 'df': df_html})
 
-def youtube_social_login(request):
-    return render(request, 'login/index.html')
-
-
 def makeTrendList():
     #TrendList.objects.all().delete()
     # API 인증 정보를 설정합니다.
@@ -268,8 +264,11 @@ def makecategoryPopChannel():
 
     return 
 
-def showCategoryPopChannel(request):
-    pop_chnllist = PopularChannelInfo.objects.all()
+def showCategoryPopChannel(request, param):
+    all_chnls = PopularChannelInfo.objects.all()
+    pop_chnllist = []
+    for index in range((int(param)-1)*10, int(param)*10-1):
+        pop_chnllist.append(all_chnls[index])
     return render(request, 'category/index.html', context={'pop_chnllist': pop_chnllist})
 
 

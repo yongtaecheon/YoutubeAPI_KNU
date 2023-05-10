@@ -48,3 +48,11 @@ body {
   color: #fff;
   border-bottom-color: #fff;
 }
+
+.nav-masthead .disabled {
+  color:rgb(0, 0, 0);
+}
+
+.modal-content .modal-header .modal-content {
+  color: rgb(0, 0, 0);
+}
