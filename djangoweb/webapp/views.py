@@ -11,107 +11,125 @@ from google.auth.transport.requests import Request
 from oauth2client.client import OAuth2Credentials
 from django.contrib.auth.models import User
 from .models import CredentialsModel
+from django.http import JsonResponse
+from django.urls import reverse
+
 
 import os
 import datetime
 import re
+import requests
 import pandas as pd
 import json
+import google.oauth2.credentials
+import googleapiclient.discovery
 import google_auth_oauthlib.flow
 
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 CLIENT_SECRETS_FILE = "C:/Users/dnjsr/OneDrive/Desktop/project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
-
 SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly']
+API_SERVICE_NAME = 'youtubeAnalytics'
+API_VERSION = 'v2'
 
-def my_view(request):
-    user = request.user
-    credential = CredentialsModel.objects.filter(user=user)
-    if credential:
-        credential = credential[0]
-        credentials = Credentials.from_authorized_user_info(
-            credential.to_json()
-        )
-    else:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            CLIENT_SECRETS_FILE, SCOPES
-        )
-        flow.redirect_uri = request.build_absolute_uri('/oauth2callback/')
-        authorization_url, _ = flow.authorization_url(access_type='offline')
-        request.session['oauth2_state'] = flow.state
-        return redirect(authorization_url)
+def api_request(request):
+  if 'credentials' not in request.session:
+    return redirect('authorize')
+
+  # Load credentials from the session.
+  credentials = google.oauth2.credentials.Credentials(
+      **request.session['credentials'])
+
+  youtube = googleapiclient.discovery.build(
+      API_SERVICE_NAME, API_VERSION, credentials=credentials)
+
+  report = youtube.reports().query(ids='channel==MINE', startDate='2020-05-01', endDate='2020-06-30', metrics='views').execute()
+
+  # Save credentials back to session in case access token was refreshed.
+  # ACTION ITEM: In a production app, you likely want to save these
+  #              credentials in a persistent database instead.
+  request.session['credentials'] = credentials_to_dict(credentials)
+
+  return JsonResponse(report)
+
+def authorize(request):
+      # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
+  flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+      CLIENT_SECRETS_FILE, scopes=SCOPES)
+
+  # The URI created here must exactly match one of the authorized redirect URIs
+  # for the OAuth 2.0 client, which you configured in the API Console. If this
+  # value doesn't match an authorized URI, you will get a 'redirect_uri_mismatch'
+  # error.
+  flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
+
+  authorization_url, state = flow.authorization_url(
+      # Enable offline access so that you can refresh an access token without
+      # re-prompting the user for permission. Recommended for web server apps.
+      access_type='offline',
+      # Enable incremental authorization. Recommended as a best practice.
+      include_granted_scopes='true')
+
+  # Store the state so the callback can verify the auth server response.
+  request.session['state'] = state
+
+  return redirect(authorization_url)
+
 
 def oauth2callback(request):
-    state = request.session.get('oauth2_state', '')
-    flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, SCOPES, state=state)
-    flow.redirect_uri = request.build_absolute_uri('/oauth2callback/')
-    authorization_response = request.build_absolute_uri()
-    flow.fetch_token(authorization_response=authorization_response)
-    credentials = flow.credentials
-    save_credentials(request.user, credentials)
-    return redirect('my_view')
+      # Specify the state when creating the flow in the callback so that it can
+  # verified in the authorization server response.
+  state = request.session['state']
 
-def save_credentials(user, credentials):
-    credential = CredentialsModel.objects.filter(user=user)
-    if credential:
-        credential = credential[0]
-        credential.credentials = credentials.to_json()
-        credential.save()
-    else:
-        credential = CredentialsModel(
-            user=user,
-            credentials=credentials.to_json(),
-        )
-        credential.save()
+  flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
+  flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
 
-def get_analytics_service(credentials):
-    """
-    Creates a YouTube Analytics API client using the credentials of the authenticated user.
-    """
-    credentials = Credentials.from_authorized_user_info(json.loads(credentials))
-    service = build('youtubeAnalytics', 'v2', credentials=credentials)
-    return service
+  # Use the authorization server's response to fetch the OAuth 2.0 tokens.
+  authorization_response = request.build_absolute_uri()
+  flow.fetch_token(authorization_response=authorization_response)
 
-def youtube_analytics(request):
-    try:
-        credential = CredentialsModel.objects.get(user=request.user)
-        service = get_analytics_service(credential.credentials)
-        # Use the YouTube Analytics API service object to make requests.
-    except CredentialsModel.DoesNotExist:
-        # Handle the case where the user does not have credentials saved.
-        pass
+  # Store credentials in the session.
+  # ACTION ITEM: In a production app, you likely want to save these
+  #              credentials in a persistent database instead.
+  credentials = flow.credentials
+  request.session['credentials'] = credentials_to_dict(credentials)
 
-    # YouTube 채널 ID 가져오기
-    channels = youtube_analytics.channels().list(
-        part='snippet,contentDetails,statistics',
-        mine=True
-    ).execute()
-    channel = channels['items'][0]
-    channel_id = channel['id']
+  return redirect(reverse('api_request'))
 
-    # API 사용 예제: 7일 동안의 조회수 및 구독자 수 가져오기
-    today = datetime.datetime.now()
-    seven_days_ago = (today - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
-    today = today.strftime('%Y-%m-%d')
-    response = youtube_analytics.reports().query(
-        ids='channel==' + channel_id,
-        startDate=seven_days_ago,
-        endDate=today,
-        metrics='views,subscribersGained',
-        dimensions='day'
-    ).execute()
-    rows = response['rows']
-    data = []
-    for row in rows:
-        data.append({
-            'date': row[0],
-            'views': int(row[1]),
-            'subscribers_gained': int(row[2])
-        })
+def revoke(request):
+  if 'credentials' not in request.session:
+    return ('You need to <a href="/authorize">authorize</a> before ' +
+            'testing the code to revoke credentials.')
 
-    print(data)
-    
-    # 결과를 HTML 페이지로 렌더링합니다.
-    return render(request, 'youtube_analytics.html', {'data': data})
+  credentials = google.oauth2.credentials.Credentials(
+    **request.session['credentials'])
+
+  revoke = requests.post('https://oauth2.googleapis.com/revoke',
+      params={'token': credentials.token},
+      headers = {'content-type': 'application/x-www-form-urlencoded'})
+
+  status_code = getattr(revoke, 'status_code')
+  if status_code == 200:
+    return('Credentials successfully revoked.' + print_index_table())
+  else:
+    return('An error occurred.' + print_index_table())
+
+def clear_credentials(request):
+  if 'credentials' in request.session:
+    del request.session['credentials']
+  return ('Credentials have been cleared.<br><br>' +
+          print_index_table())
+
+def credentials_to_dict(credentials):
+  return {'token': credentials.token,
+          'refresh_token': credentials.refresh_token,
+          'token_uri': credentials.token_uri,
+          'client_id': credentials.client_id,
+          'client_secret': credentials.client_secret,
+          'scopes': credentials.scopes}
+
+def print_index_table(request):
+      return render(request, "test/index.html")
 
 # Create your views here.
 def home(request):
