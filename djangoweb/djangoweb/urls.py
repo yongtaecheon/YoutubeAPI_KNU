@@ -20,7 +20,7 @@ import webapp.views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', webapp.views.home),
-    path('jumbotron/', webapp.views.jumbotron),
+    path('main/', webapp.views.main),
     path('dashboard/', webapp.views.dashboard),
     path('searchchannel/', webapp.views.searchchannel, name='searchchannel'),
     path('accounts/', include('allauth.urls')),

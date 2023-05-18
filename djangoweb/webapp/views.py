@@ -25,7 +25,7 @@ def home(request):
     return render(request, 'cover/index.html')
 
 
-def jumbotron(request):
+def main(request):
     return render(request, 'jumbotron/index.html')
 
 
