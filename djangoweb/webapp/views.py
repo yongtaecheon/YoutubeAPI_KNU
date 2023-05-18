@@ -8,6 +8,8 @@ import json
 from datetime import datetime
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from django.db.models import Q
+
 
 # Create your views here.
 
@@ -17,6 +19,7 @@ API_KEY2 = 'AIzaSyCybUkLvjkdaWFgdc7GtVdnn-vgal0g0mg'
 API_KEY3 = 'AIzaSyD1mS8iqeHOniuebnom3cFT_yVG1VI1odA'
 API_KEY4 = 'AIzaSyA2-DRryTN0JYnI3P-letj_bl-sj9wpVKw'
 API_KEY5 = 'AIzaSyB5nnPCXwDu3BWpCQxcrpa8mdJYqBZANjQ'
+
 
 def home(request):
     return render(request, 'cover/index.html')
@@ -37,7 +40,6 @@ def searchchannel(request):
 
         # YouTube API 클라이언트를 빌드
         youtube = build('youtube', 'v3', developerKey=API_KEY1)
-
 
         # search API 채널 이름으로 채널 id 가져오기
         search_response = youtube.search().list(
@@ -117,7 +119,7 @@ def searchchannel(request):
                     video_response['items'][0]['statistics']['likeCount'])
                 try:
                     video_comments.append(video_response['items']
-                                      [0]['statistics']['commentCount'])
+                                          [0]['statistics']['commentCount'])
                 except:
                     video_comments.append('댓글중지')
                 video_date.append(
@@ -146,8 +148,9 @@ def searchchannel(request):
         chnl.save()
     return render(request, 'dashboard/index.html', context={'chnl': chnl, 'df': df_html})
 
+
 def makeTrendList():
-    #TrendList.objects.all().delete()
+    # TrendList.objects.all().delete()
     # API 인증 정보를 설정합니다.
 
     YOUTUBE_API_SERVICE_NAME = 'youtube'
@@ -168,7 +171,7 @@ def makeTrendList():
     # API 요청을 실행하고 응답을 받아옵니다.
     response = req.execute()
     now = datetime.now()
-        
+
     for index, item in enumerate(response['items']):
         tl = TrendList()
         tl.title = item['snippet']['title']
@@ -197,82 +200,276 @@ def objectcreation():
     return object
 
 
-def makecategoryPopChannel():
-    now = datetime.now()
-    youtube = build('youtube', 'v3', developerKey=API_KEY3)
+Categoryid = {'1': "애니메이션", '2': "자동차", '10': "음악", '15': "동물", '17': "스포츠", '20': "게임",
+              '22': "블로그", '23': "코미디", '24': "엔터테인먼트", '25': "뉴스_정치", '26': "스타일", '27': "교육", '28': "과학_기술", '30': "영화"}
+
+
+def get_channelId_byplaylist(youtube, Categorylist):
+    cid = []
+    vid = []
+    key = 0
+    if Categorylist == str(10):
+        id = "PL4fGSI1pDJn6jXS_Tv_N9B8Z0HTRVJE0m"
+    request = youtube.playlistItems().list(
+        part="snippet",
+        playlistId=id,
+        maxResults=50
+    )
+    response = request.execute()
+    for item in response["items"]:
+        videoid = item['snippet']['resourceId']["videoId"]
+        if videoid not in vid:
+            vid.append(videoid)
+
+    while 'nextPageToken' in response and len(vid) < 100:
+        request = youtube.playlistItems().list(
+            part="snippet",
+            playlistId=id,
+            maxResults=50,
+            pageToken=response['nextPageToken']
+        )
+        response = request.execute()
+        for item in response["items"]:
+            videoid = item['snippet']['resourceId']["videoId"]
+            if videoid not in vid:
+                vid.append(videoid)
+    for i in range(len(vid)):
+        key = 0
+        request = youtube.videos().list(
+            part="snippet",
+            id=vid[i]
+        )
+        response = request.execute()
+        for j in range(len(cid)):
+            if response['items'][0]['snippet']['channelId'] == cid[j]:
+                key = 1
+                break
+        if key == 0:
+            cid.append(response['items'][0]['snippet']['channelId'])
+    return cid
+
+
+def get_channelId_bynone(youtube):
+    cid = []
+    key = 0
+    request = youtube.videos().list(
+        part="snippet,statistics",
+        chart="mostPopular",
+        maxResults=50,
+        regionCode='KR'
+    )
+    response = request.execute()
+    for item in response['items']:
+        for cidcount in range(len(cid)):
+            if cid[cidcount] == item['snippet']['channelId']:
+                key = 1
+                break
+        if key == 0:
+            cid.append(item['snippet']['channelId'])
+        key = 0
+    while 'nextPageToken' in response and len(cid) < 100:
+        request = youtube.videos().list(
+            part="snippet,statistics",
+            chart="mostPopular",
+            maxResults=50,
+            pageToken=response['nextPageToken'],
+            regionCode='KR'
+        )
+        response = request.execute()
+        key = 0
+        for item in response['items']:
+            for cidcount in range(len(cid)):
+               if cid[cidcount] == item['snippet']['channelId']:
+                   key = 1
+                   break
+            if key == 0:
+                cid.append(item['snippet']['channelId'])
+            if len(cid) >= 100:
+                break
+            key = 0
+    return cid
+
+
+def get_channelId_bycategory(youtube, Categoryid):
+    cid = []
+    key = 0
+    request = youtube.videos().list(
+        part="snippet,statistics",
+        chart="mostPopular",
+        videoCategoryId=Categoryid,
+        maxResults=50,
+        regionCode='KR'
+    )
+    response = request.execute()
+    for item in response['items']:
+        for cidcount in range(len(cid)):
+            if cid[cidcount] == item['snippet']['channelId']:
+                key = 1
+                break
+        if key == 0:
+            cid.append(item['snippet']['channelId'])
+        key = 0
+    while 'nextPageToken' in response and len(cid) < 100:
+        request = youtube.videos().list(
+            part="snippet,statistics",
+            chart="mostPopular",
+            videoCategoryId=Categoryid,
+            maxResults=50,
+            pageToken=response['nextPageToken'],
+            regionCode='KR'
+        )
+        response = request.execute()
+        key = 0
+        for item in response['items']:
+            for cidcount in range(len(cid)):
+               if cid[cidcount] == item['snippet']['channelId']:
+                   key = 1
+                   break
+            if key == 0:
+                cid.append(item['snippet']['channelId'])
+            if len(cid) >= 100:
+                break
+            key = 0
+    return cid
+
+
+def get_channelinfo_bychannelId(youtube, cid, categoryid):
+    popularchannel = []
+    for ids in range(len(cid)):
+        result = youtube.channels().list(
+            part='snippet, statistics',
+            id=cid[ids],
+        ).execute()
+        cname = result['items'][0]['snippet']['title']
+        cthumbnail = result['items'][0]['snippet']['thumbnails']['high']['url']
+        cviewCount = int(result['items'][0]['statistics']['viewCount'])
+        if (~result['items'][0]['statistics']['hiddenSubscriberCount']):
+            csubscriber = int(result['items'][0]
+                              ['statistics']['subscriberCount'])
+        else:
+            csubscriber = int(result['items'][0]
+                              ['statistics']['hiddenSubscriberCount'])
+        category = Categoryid[categoryid]
+        popularchannel.append(
+            [category, cid[ids], cname, cviewCount, csubscriber, cthumbnail, -1, -1])
+    return popularchannel
+
+
+def sort_channel_byCount(channels, key):
+    if key == 1:  # subscriber
+        sorted_channels = sorted(channels, key=lambda x: -x[4])
+        return sorted_channels
+    elif key == 2:  # viewcounter
+        sorted_channelv = sorted(channels, key=lambda x: -x[3])
+        return sorted_channelv
+
+
+def ranking_channel(categoryid, youtube):
+    if categoryid == str(30):
+        cid = get_channelId_bynone(youtube)
+    else:
+        cid = get_channelId_bycategory(youtube, categoryid)
+    if categoryid == str(10):
+        cid = cid + get_channelId_byplaylist(youtube, categoryid)
+    channel = get_channelinfo_bychannelId(youtube, cid, categoryid)
+    return channel
+
+
+def print_channel(channel):
+    date = datetime.now().strftime('%Y%m%d')
+    for k in range(len(channel)):
+        channelcategory = channel[k][0]
+        channeliD = channel[k][1]
+        channelname = channel[k][2]
+        channelviews = channel[k][3]
+        subscriber = channel[k][4]
+        channelthumbnail = channel[k][5]
+        rankingsubscribers = channel[k][6]
+        rankingviewcounters = channel[k][7]
+        PopularChannelInfo.objects.create(channel_category=channelcategory, channelID=channeliD, channel_name=channelname,
+                                          channel_views=channelviews, subscribers=subscriber, channel_thumbnail=channelthumbnail,
+                                          ranking_subscribers=rankingsubscribers, ranking_viewcounters=rankingviewcounters, LoadDate=date)
+
+
+def not_multi(channel):
+    multicheck = []
+    mkey = 0
+    for i in range(len(channel)):
+        for j in range(len(multicheck)):
+            if channel[i][1] == multicheck[j][1]:
+                mkey = 1
+                break
+        if mkey == 0:
+            multicheck.append(channel[i])
+        mkey = 0
+    return multicheck
+
+
+def regenerate(channel):
+    channel = sort_channel_byCount(channel, 1)
+    channels = channel
+    for i in range(len(channel)):
+        channel[i][6] = i+1
+    channel = sort_channel_byCount(channel, 2)
+    channelv = channel
+    for i in range(len(channel)):
+        channel[i][7] = i+1
+    # if len(channel)>100:
+    #    for i in range(100,len(channels)):
+    #        del channels[100]
+    #    for i in range(100,len(channelv)):
+    #        del channelv[100]
+    channel = channels + channelv
+    channel = not_multi(channel)
+    return channel
+
+
+def all_ranking_channel(youtube):
+    allranking = []
+    success_Category = [1, 2, 10, 15, 17, 20, 22, 23, 24, 25, 26, 28, 30]
+    for i in range(len(success_Category)):
+        allranking = allranking + \
+            ranking_channel(str(success_Category[i]), youtube)
+        allranking = not_multi(allranking)
+    allranking = regenerate(allranking)
+    print_channel(allranking)
+
+
+def make_rankingchannel():
+    youtube = build('youtube', 'v3', developerKey=API_KEY1)
+    all_ranking_channel(youtube)
+    set = PopularChannelInfo.objects.all()
+    return
+
+
+def showrankingchannel(request, param):
+    date = datetime.now().strftime('%Y%m%d')
+    categorys = []
+    if request.method == 'POST':
+        if 'category' in request.POST:
+            categorys = request.POST.getlist("category")
+            print(categorys)
+    all_chnls = PopularChannelInfo.objects.filter(LoadDate=date)
+    if categorys:
+        all_chnls = all_chnls.filter(channel_category__in=categorys)
+    pop_subsort_chnlist = all_chnls.order_by('ranking_subscribers')
+    pop_viewsort_chnlist = all_chnls.order_by('ranking_viewcounters')
     pop_chnllist = []
-    pop_chnl = PopularChannelInfo()
-
-    categories = youtube.videoCategories().list(
-        part='snippet', regionCode='KR').execute()
-    for case in categories['items']:
-        print("카테고리 : ", case['snippet']['title'])
-
-    for category in categories['items']:
-
-        category_id = category['id']
-        category_name = category['snippet']['title']
-
-        if (category['snippet']['assignable'] == False):
-            continue
-        try:
-            search_response = youtube.videos().list(
-                chart='mostPopular',
-                part='snippet',
-                videoCategoryId=category_id,
-                maxResults=10,
-                regionCode='KR'
-            ).execute()
-
-        except HttpError as error:
-            if (error.resp.status == 404):
-                continue
-            else:
-                print("error occurred", error)
-
-        print("카테고리", category_name)
-        print(" ")
-        for video in search_response['items']:
-            channel_id = video['snippet']['channelId']
-            channel_response = youtube.channels().list(
-                part='snippet,statistics',
-                id=channel_id
-            ).execute()
-            pop_chnllist.append(objectcreation())
-            for channel in channel_response['items']:
-
-                channel_title = channel['snippet']['title']
-                channel_description = channel['snippet']['description']
-                channel_thumbnail = channel['snippet']['thumbnails']['high']['url']
-                channel_viewCount = channel['statistics']['viewCount']
-                if (~channel['statistics']['hiddenSubscriberCount']):
-                    channel_subscribe = channel['statistics']['subscriberCount']
-                    pop_chnllist[-1].subscribers = channel_subscribe
-                pop_chnllist[-1].channelID = channel_id
-                pop_chnllist[-1].channel_views = channel_viewCount
-                pop_chnllist[-1].channel_category = category_name
-                pop_chnllist[-1].channel_name = channel_title
-                pop_chnllist[-1].channel_thumbnail = channel_thumbnail
-                pop_chnllist[-1].LoadDate = now.strftime('%Y%m%d')
-                pop_chnllist[-1].save()
-
-                # pop_chnllist.append(pop_chnl)
-
-                print("     채널 이름:", pop_chnl.channel_name)
-    # for pop_chnl_item in pop_chnllist:
-    #    pop_chnl_item.save()
-
-    return 
-
-def showCategoryPopChannel(request, param):
-    all_chnls = PopularChannelInfo.objects.all()
-    pop_chnllist = []
-    for index in range((int(param)-1)*10, int(param)*10-1):
-        pop_chnllist.append(all_chnls[index])
-    return render(request, 'category/index.html', context={'pop_chnllist': pop_chnllist})
+    button_clicked = request.POST.get('button_clicked', '')
+    if button_clicked == 'Subscriber':
+        for index in range((int(param)-1)*10, int(param)*10-1):
+            pop_chnllist.append(pop_subsort_chnlist[index])
+    elif button_clicked == 'ViewCount':
+        for index in range((int(param)-1)*10, int(param)*10-1):
+            pop_chnllist.append(pop_viewsort_chnlist[index])
+    else:
+        for index in range((int(param)-1)*10, int(param)*10-1):
+            pop_chnllist.append(all_chnls[index])
+    return render(request, 'category/index.html', context={
+        'pop_chnllist': pop_chnllist})
 
 
 def updateDB(request):
     makeTrendList()
-    makecategoryPopChannel()
+    make_rankingchannel()
     return render(request, 'update/index.html')

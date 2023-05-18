@@ -35,6 +35,7 @@ class PopularChannelInfo(models.Model):
     channelID = models.CharField(default='',max_length=100)
     channel_name = models.CharField(null=True,default='',max_length=100)
     channel_views = models.BigIntegerField(null=True,default=0)
-    hidden_sub = models.IntegerField(null=True,default=0)
     subscribers = models.IntegerField(null=True,default=0)
     channel_thumbnail = models.CharField(default='',max_length=100)
+    ranking_subscribers = models.IntegerField(null=True,default=0)
+    ranking_viewcounters = models.IntegerField(null=True,default=0)

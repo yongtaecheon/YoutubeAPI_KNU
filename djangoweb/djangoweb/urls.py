@@ -15,16 +15,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-import webapp.views;
+import webapp.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', webapp.views.home),
     path('jumbotron/', webapp.views.jumbotron),
-    path('dashboard/',webapp.views.dashboard),
+    path('dashboard/', webapp.views.dashboard),
     path('searchchannel/', webapp.views.searchchannel, name='searchchannel'),
     path('accounts/', include('allauth.urls')),
     path('updateDB/', webapp.views.updateDB, name='updateDB'),
-    path('showTrendList/<int:param>/',webapp.views.showTrendList, name='showTrendList'),
-    path('showCategoryPopChannel/<int:param>/',webapp.views.showCategoryPopChannel, name='showCategoryPopChannel')
-    ]
+    path('showTrendList/<int:param>/',
+         webapp.views.showTrendList, name='showTrendList'),
+    path('showrankingchannel/<int:param>/',
+         webapp.views.showrankingchannel, name='showrankingchannel')
+]
