@@ -5,7 +5,7 @@ import os
 import re
 import pandas as pd
 import json
-from datetime import datetime
+from datetime import datetime,timedelta
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from django.db.models import Q
@@ -20,6 +20,8 @@ API_KEY3 = 'AIzaSyD1mS8iqeHOniuebnom3cFT_yVG1VI1odA'
 API_KEY4 = 'AIzaSyA2-DRryTN0JYnI3P-letj_bl-sj9wpVKw'
 API_KEY5 = 'AIzaSyB5nnPCXwDu3BWpCQxcrpa8mdJYqBZANjQ'
 
+Categoryid = {'1': "애니메이션", '2': "자동차", '10': "음악", '15': "동물", '17': "스포츠", '20': "게임",
+              '22': "블로그", '23': "코미디", '24': "엔터테인먼트", '25': "뉴스_정치", '26': "스타일", '27': "교육", '28': "과학_기술", '30': "영화"}
 
 def home(request):
     return render(request, 'cover/index.html')
@@ -33,13 +35,181 @@ def dashboard(request):
     return render(request, 'dashboard/index.html')
 
 
+# def searchchannel_old(request):
+#     if request.method == 'POST':
+#         chnl = ChannelInfo()
+#         chnl.channel_name = request.POST['channel_name']
+
+#         # YouTube API 클라이언트를 빌드
+#         youtube = build('youtube', 'v3', developerKey=API_KEY2)
+
+#         # search API 채널 이름으로 채널 id 가져오기
+#         search_response = youtube.search().list(
+#             q=chnl.channel_name,
+#             type="channel",
+#             part="id",
+#         ).execute()
+#         chnl.channelID = search_response['items'][0]['id']['channelId']
+
+#         # 채널 통계를 가져옵니다.
+#         channels_response = youtube.channels().list(
+#             part='snippet,contentDetails,statistics',
+#             id=chnl.channelID
+#         ).execute()
+#         chnl.channel_name = channels_response['items'][0]['snippet']['title']
+#         chnl.views = int(
+#             channels_response['items'][0]['statistics']['viewCount'])
+#         chnl.subscribers = int(
+#             channels_response['items'][0]['statistics']['subscriberCount'])
+#         chnl.hidden_sub = int(
+#             channels_response['items'][0]['statistics']['hiddenSubscriberCount'])
+#         chnl.videos = int(
+#             channels_response['items'][0]['statistics']['videoCount'])
+#         chnl.channel_img = channels_response['items'][0]['snippet']['thumbnails']['high']['url']
+#         cpm = 17  # 1000 뷰당 예상 수익 ($2)
+#         chnl.revenue = round((chnl.views / 1000) * cpm)
+
+#         # search API로 채널 비디오 리스트 가져오기
+#         search_response = youtube.search().list(
+#             channelId=chnl.channelID,
+#             type="video",
+#             part="id",
+#             maxResults=50,  # 한 번에 최대 50개의 결과 가져오기
+#             order="date"
+#         ).execute()
+#         # 검색 결과에서 동영상 ID 추출
+#         video_ids = []
+#         for item in search_response["items"]:
+#             video_ids.append(item["id"]["videoId"])
+#         # # 검색 결과가 50개 이상일 경우, 다음 페이지에 대한 요청을 보내어 결과를 가져옴
+#         # while "nextPageToken" in search_response:
+#         #     search_response = youtube.search().list(
+#         #         channelId=chnl.channelID,
+#         #         type="video",
+#         #         part="id",
+#         #         maxResults=50,
+#         #         pageToken=search_response["nextPageToken"]
+#         #     ).execute()
+#         #     for item in search_response["items"]:
+#         #         video_ids.append(item["id"]["videoId"])
+#         # 비디오 정보 가져오기
+#         video_title = []
+#         video_url = []
+#         video_category_id = []
+#         video_views = []
+#         video_likes = []
+#         video_comments = []
+#         video_date = []
+#         video_embed = []
+#         for video_id in video_ids:
+#             video_response = youtube.videos().list(
+#                 part='snippet, statistics, player', id=video_id).execute()
+#             if video_response['items'] == []:
+#                 video_category_id.append('-')
+#                 video_views.append('-')
+#                 video_likes.append('-')
+#                 video_comments.append('-')
+#                 video_date.append('-')
+#             else:
+#                 video_title.append(
+#                     video_response['items'][0]['snippet']['title'])
+#                 video_url.append(
+#                     video_response['items'][0]['snippet']['thumbnails']['high']['url'])
+#                 video_category_id.append(
+#                     video_response['items'][0]['snippet']['categoryId'])
+#                 video_views.append(
+#                     video_response['items'][0]['statistics']['viewCount'])
+#                 video_likes.append(
+#                     video_response['items'][0]['statistics']['likeCount'])
+#                 try:
+#                     video_comments.append(video_response['items']
+#                                           [0]['statistics']['commentCount'])
+#                 except:
+#                     video_comments.append('댓글중지')
+#                 video_date.append(
+#                     video_response['items'][0]['snippet']['publishedAt'])
+#                 video_embed.append(
+#                     video_response['items'][0]['player']['embedHtml'])
+#         video_result = []
+#         video_result.append(video_title)
+#         video_result.append(video_url)
+#         video_result.append(video_category_id)
+#         video_result.append(video_views)
+#         video_result.append(video_likes)
+#         video_result.append(video_comments)
+#         video_result.append(video_date)
+#         # json 활용하여 textField 형태로 리스트들 저장
+#         chnl.video_title = json.dumps(video_title)
+#         chnl.video_url = json.dumps(video_url)
+#         chnl.video_category_id = json.dumps(video_category_id)
+#         chnl.video_views = json.dumps(video_views)
+#         chnl.video_likes = json.dumps(video_likes)
+#         chnl.video_comments = json.dumps(video_comments)
+#         chnl.video_date = json.dumps(video_date)
+#         # pandas dataframe 생성후 html로 변경, render context 인자로 넘겨줌
+#         df = pd.DataFrame([video_title, video_url, video_category_id,
+#                           video_views, video_likes, video_comments, video_date]).T
+#         df.columns = ['video_title', 'video_url', 'video_category_id',
+#                       'video_views', 'video_likes', 'video_comments', 'video_date']
+#         # for url in video_url:
+#         #     df.replace(url, '<img src='+url+'>', inplace=True)
+#             # df.loc[url, video_url] = '<img src='+url+'>'
+#         # df = df.sort_values(by=['조회 수','좋아요 수','댓글 수'], ascending=False)
+#         df_html = df.to_html(decimal=',', justify='center',
+#                              classes='table table-striped table-sm table-hover')
+#         now = datetime.now()
+#         chnl.LoadDate = now.strftime('%Y%m%d')
+#         chnl.save()
+#     return render(request, 'dashboard/index.html', context={'chnl': chnl, 'df_html': df_html, 'video_embed':video_embed ,'video_result':video_result, 'df':df})
+
+def is_three_months_ago(time_str):
+    # 현재 시간 가져오기
+    current_time = datetime.now()
+
+    # 주어진 시간 문자열을 datetime 객체로 변환
+    time_format = "%Y-%m-%dT%H:%M:%S%fZ"
+    given_time = datetime.strptime(time_str, time_format)
+
+    # 현재 시간에서 3개월 전 시간 계산
+    three_months_ago = current_time - timedelta(days=6*30)
+
+    # 주어진 시간이 3개월 이전인지 판단
+    if given_time > three_months_ago:
+        return True
+    else:
+        return False
+
+def time_to_seconds(time_str):
+    # 'PT#M#S' 형식에서 분과 초를 추출하여 변환
+    minutes = 0
+    seconds = 0
+
+    # 'M'과 'S' 사이에 있는 문자열 추출
+    time_components = time_str.split('T')[1].split('S')[0]
+
+    # 'M'을 기준으로 분 추출
+    if 'M' in time_components:
+        minutes = int(time_components.split('M')[0])
+
+    # 'S'를 기준으로 초 추출
+    if 'S' in time_components:
+        seconds = int(time_components.split('S')[0])
+
+    # 분을 초로 변환
+    minutes_to_seconds = minutes * 60
+
+    # 분과 초를 더하여 총 초로 반환
+    total_seconds = minutes_to_seconds + seconds
+
+    return total_seconds
+
 def searchchannel(request):
+    chnl = ChannelInfo()
     if request.method == 'POST':
-        chnl = ChannelInfo()
         chnl.channel_name = request.POST['channel_name']
 
         # YouTube API 클라이언트를 빌드
-        youtube = build('youtube', 'v3', developerKey=API_KEY1)
+        youtube = build('youtube', 'v3', developerKey=API_KEY5)
 
         # search API 채널 이름으로 채널 id 가져오기
         search_response = youtube.search().list(
@@ -48,105 +218,206 @@ def searchchannel(request):
             part="id",
         ).execute()
         chnl.channelID = search_response['items'][0]['id']['channelId']
+    # 채널 통계를 가져옵니다.
+    channels_response = youtube.channels().list(
+        part='snippet,contentDetails,statistics',
+        id=chnl.channelID
+    ).execute()
+    chnl.channel_name = channels_response['items'][0]['snippet']['title']
+    chnl.views = int(
+        channels_response['items'][0]['statistics']['viewCount'])
+    chnl.subscribers = int(
+        channels_response['items'][0]['statistics']['subscriberCount'])
+    chnl.hidden_sub = int(
+        channels_response['items'][0]['statistics']['hiddenSubscriberCount'])
+    chnl.videos = int(
+        channels_response['items'][0]['statistics']['videoCount'])
+    chnl.channel_img = channels_response['items'][0]['snippet']['thumbnails']['high']['url']
+    cpm = 17  # 1000 뷰당 예상 수익 ($2)
+    chnl.revenue = round((chnl.views / 1000) * cpm)
 
-        # 채널 통계를 가져옵니다.
-        channels_response = youtube.channels().list(
-            part='snippet,contentDetails,statistics',
-            id=chnl.channelID
-        ).execute()
-        chnl.channel_name = channels_response['items'][0]['snippet']['title']
-        chnl.views = int(
-            channels_response['items'][0]['statistics']['viewCount'])
-        chnl.subscribers = int(
-            channels_response['items'][0]['statistics']['subscriberCount'])
-        chnl.hidden_sub = int(
-            channels_response['items'][0]['statistics']['hiddenSubscriberCount'])
-        chnl.videos = int(
-            channels_response['items'][0]['statistics']['videoCount'])
-        chnl.channel_img = channels_response['items'][0]['snippet']['thumbnails']['high']['url']
-        cpm = 17  # 1000 뷰당 예상 수익 ($2)
-        chnl.revenue = round((chnl.views / 1000) * cpm)
+    # search API로 채널 비디오 리스트 가져오기
+    search_response = youtube.search().list(
+        channelId=chnl.channelID,
+        type="video",
+        part="id",
+        maxResults=12,  # 한 번에 최대 12개의 결과 가져오기
+        order="date"
+    ).execute()
+    # 검색 결과에서 동영상 ID 추출
+    video_ids = []
 
-        # search API로 채널 비디오 리스트 가져오기
-        search_response = youtube.search().list(
-            channelId=chnl.channelID,
-            type="video",
-            part="id",
-            maxResults=50  # 한 번에 최대 50개의 결과 가져오기
-        ).execute()
-        # 검색 결과에서 동영상 ID 추출
-        video_ids = []
-        for item in search_response["items"]:
-            video_ids.append(item["id"]["videoId"])
-        # # 검색 결과가 50개 이상일 경우, 다음 페이지에 대한 요청을 보내어 결과를 가져옴
-        # while "nextPageToken" in search_response:
-        #     search_response = youtube.search().list(
-        #         channelId=chnl.channelID,
-        #         type="video",
-        #         part="id",
-        #         maxResults=50,
-        #         pageToken=search_response["nextPageToken"]
-        #     ).execute()
-        #     for item in search_response["items"]:
-        #         video_ids.append(item["id"]["videoId"])
-        # 비디오 정보 가져오기
-        video_title = []
-        video_url = []
-        video_category_id = []
-        video_views = []
-        video_likes = []
-        video_comments = []
-        video_date = []
-        for video_id in video_ids:
-            video_response = youtube.videos().list(
-                part='snippet, statistics', id=video_id).execute()
-            if video_response['items'] == []:
-                video_category_id.append('-')
-                video_views.append('-')
-                video_likes.append('-')
-                video_comments.append('-')
-                video_date.append('-')
+    # 비디오 정보 가져오기
+    video_result = []
+    video_title = []
+    video_views = []
+    video_likes = []
+    video_duration = []
+
+    # 평점용 데이터 인덱스 뽑기
+    # 평점 지표
+    rating = [1, 1, 1, 1, 1]
+    now = datetime.now()
+    rated_video = []
+
+    for item in search_response["items"]:
+        video_ids.append(item["id"]["videoId"])
+    button_clicked = request.POST.get('button_clicked', '')
+    if button_clicked == 'LoadMore':
+        # 검색 결과가 50개 이상일 경우, 다음 페이지에 대한 요청을 보내어 결과를 가져옴
+        while "nextPageToken" in search_response:
+            search_response = youtube.search().list(
+                channelId=chnl.channelID,
+                type="video",
+                part="id",
+                maxResults=9,
+                pageToken=search_response["nextPageToken"]
+            ).execute()
+            for item in search_response["items"]:
+                video_ids.append(item["id"]["videoId"])
+    
+    for video_id in video_ids:
+        video_info = []
+        video_response = youtube.videos().list(
+            part='snippet, statistics, player, contentDetails', id=video_id).execute()
+        video_info.append(
+            video_response['items'][0]['snippet']['title']) #0 : title
+        video_title.append(
+            video_response['items'][0]['snippet']['title'])  # 0 : title
+        
+        video_info.append(
+            video_response['items'][0]['snippet']['thumbnails']['high']['url']) #1: 썸네일
+        
+        video_info.append(
+            Categoryid[video_response['items'][0]['snippet']['categoryId']]) #2: 카테고리 번호
+        
+        video_info.append(
+            video_response['items'][0]['statistics']['viewCount']) #3: 조회수
+        video_views.append(
+            video_response['items'][0]['statistics']['viewCount'])  # 3: 조회수
+        
+        video_info.append(
+            video_response['items'][0]['statistics']['likeCount'])  # 4: 좋아요수
+        video_likes.append(
+            video_response['items'][0]['statistics']['likeCount']) #4: 좋아요수
+        try:
+            video_info.append(video_response['items'] #5: 댓글 수
+                                    [0]['statistics']['commentCount'])
+        except:
+            video_info.append('댓글 중지 상태')
+        video_info.append( #6: 게시일
+            video_response['items'][0]['snippet']['publishedAt'])
+        
+        video_info.append(
+            re.findall(r'www.youtube.com/embed/[\w\W\s\S]{11}', video_response['items'][0]['player']['embedHtml'])[0])
+
+        video_duration.append(
+            video_response['items'][0]['contentDetails']['duration']
+        )
+        # 시간연산
+        publish_date_str = video_response['items'][0]['snippet']['publishedAt']
+        if (is_three_months_ago(publish_date_str)):  # 조건 달것 3개월 이네
+            rated_video.append(len(video_title)-1)
+        video_result.append(video_info)
+        
+    # 채널 평점
+    # 구독자 수 1번
+    if (len(rated_video)):
+        if (chnl.subscribers > 1000000):
+            rating[0] = 5.0
+        elif (chnl.subscribers > 100000):
+            alpha = (chnl.subscribers-100000)/9900000
+            rating[0] = 3*(1-alpha)+5*alpha
+        else:
+            alpha = (chnl.subscribers)/100000
+            rating[0] = 1*(1-alpha)+3*alpha
+
+        # 구독자 충성도 2번
+        views_per_subs = 0
+        like_per_subs = 0
+        com_per_subs = 0
+        vs_rate = 0
+        ls_rate = 0
+        cs_rate = 0
+        for sample in rated_video:
+            views_per_subs += int(video_views[sample])/chnl.subscribers
+            like_per_subs += int(video_likes[sample])/chnl.subscribers
+            # 100만 1700~ 5
+            com_per_subs += int(video_likes[sample])/chnl.subscribers
+            views_per_subs /= len(rated_video)
+            like_per_subs /= len(rated_video)
+            com_per_subs /= len(rated_video)
+
+            # 구독자 대비 조회수
+            if (views_per_subs > 1):
+                vs_rate = 5
             else:
-                video_title.append(
-                    video_response['items'][0]['snippet']['title'])
-                video_url.append(
-                    video_response['items'][0]['snippet']['thumbnails']['high']['url'])
-                video_category_id.append(
-                    video_response['items'][0]['snippet']['categoryId'])
-                video_views.append(
-                    video_response['items'][0]['statistics']['viewCount'])
-                video_likes.append(
-                    video_response['items'][0]['statistics']['likeCount'])
-                try:
-                    video_comments.append(video_response['items']
-                                          [0]['statistics']['commentCount'])
-                except:
-                    video_comments.append('댓글중지')
-                video_date.append(
-                    video_response['items'][0]['snippet']['publishedAt'])
-        # json 활용하여 textField 형태로 리스트들 저장
-        chnl.video_title = json.dumps(video_title)
-        chnl.video_url = json.dumps(video_url)
-        chnl.video_category_id = json.dumps(video_category_id)
-        chnl.video_views = json.dumps(video_views)
-        chnl.video_likes = json.dumps(video_likes)
-        chnl.video_comments = json.dumps(video_comments)
-        chnl.video_date = json.dumps(video_date)
-        # pandas dataframe 생성후 html로 변경, render context 인자로 넘겨줌
-        df = pd.DataFrame([video_title, video_url, video_category_id,
-                          video_views, video_likes, video_comments, video_date]).T
-        df.columns = ['비디오 명', '비디오 썸네일 URL', '카테고리 ID',
-                      '조회 수', '좋아요 수', '댓글 수', '게시일']
-        for url in video_url:
-            df.replace(url, '<img src='+url+'>', inplace=True)
-            # df.loc[url, video_url] = '<img src='+url+'>'
-        # df = df.sort_values(by=['조회 수','좋아요 수','댓글 수'], ascending=False)
-        df_html = df.to_html(decimal=',', justify='center',
-                             classes='table table-striped table-sm table-hover')
-        now = datetime.now()
-        chnl.LoadDate = now.strftime('%Y%m%d')
-        chnl.save()
-    return render(request, 'dashboard/index.html', context={'chnl': chnl, 'df': df_html})
+                alpha = views_per_subs
+                vs_rate = 1*(1-alpha) + 5*(alpha)
+
+            # 구독자 대비 좋아요  100만당 1만
+            if (like_per_subs > 0.01):
+                ls_rate = 5
+            else:
+                alpha = like_per_subs/0.01
+                ls_rate = 1*(1-alpha) + 5*(alpha)
+
+            # 구독자 대비 댓글 100만당 1700개
+            if (com_per_subs > 0.0017):
+                cs_rate = 5
+            else:
+                alpha = com_per_subs/0.0017
+                cs_rate = 1*(1-alpha) + 5*(alpha)
+
+            # 합산
+            rating[1] = vs_rate * 0.6 + ls_rate*0.2 + cs_rate * 0.2
+
+        # 영상 주기 3번
+        # print("영상개수")
+        # print(len(rated_video))
+        # print("\n")
+        if (len(rated_video) > 72):
+            rating[3] = 5
+        else:
+            alpha = len(rated_video)/72
+            rating[2] = 1*(1-alpha) + 5*alpha
+
+        # 영상 평균 조회수 4번
+        avg_view = 0
+        for sample in rated_video:
+            avg_view += int(video_views[sample])
+        avg_view = avg_view/len(rated_video)
+        if (avg_view > 500000):
+            rating[4] = 5
+        elif (avg_view >= 10000):
+            alpha = avg_view/500000
+            rating[3] = 1*(1-alpha) + 5*alpha
+        else:
+            rating[3] = 1
+
+        # 영상 길이 5번
+        avg_duration = 0
+        for sample in rated_video:
+            time_str = video_duration[sample]
+            avg_duration += time_to_seconds(time_str)
+        avg_duration /= len(rated_video)
+        # print("평균 시간")
+        # print(avg_duration)
+        if (avg_duration > 1200):
+            rating[4] = 5
+        elif (avg_duration > 480):
+            alpha = avg_duration/1200
+            rating[4] = 1*(1-alpha) + 5*alpha
+        else:
+            rating[4] = 1
+    # 채널평점 끝
+    for i in range(5):
+        rating[i] = round(rating[i], 2)
+    print("<평점>\n", "구독자 수: ",rating[0], ", 구독자 충성도: ",rating[1],", 영상 주기:", rating[2], ", 영상평균조회수: ",rating[3], ", 영상길이: ",rating[4])
+    now = datetime.now()
+    chnl.LoadDate = now.strftime('%Y%m%d')
+    chnl.save()
+    return render(request, 'dashboard/index.html', context={'chnl': chnl, 'video_result': video_result, 'rating':rating})
 
 
 def makeTrendList():
@@ -189,7 +460,7 @@ def showTrendList(request, param):
 
     tlList = []
 
-    for index in range((int(param)-1)*10, int(param)*10-1):
+    for index in range((int(param)-1)*12, int(param)*12):
         tlList.append(all_videos[index])
 
     return render(request, 'trendList/showTrendList.html', context={'tl': tlList})
@@ -198,10 +469,6 @@ def showTrendList(request, param):
 def objectcreation():
     object = PopularChannelInfo()
     return object
-
-
-Categoryid = {'1': "애니메이션", '2': "자동차", '10': "음악", '15': "동물", '17': "스포츠", '20': "게임",
-              '22': "블로그", '23': "코미디", '24': "엔터테인먼트", '25': "뉴스_정치", '26': "스타일", '27': "교육", '28': "과학_기술", '30': "영화"}
 
 
 def get_channelId_byplaylist(youtube, Categorylist):
@@ -436,7 +703,7 @@ def all_ranking_channel(youtube):
 
 
 def make_rankingchannel():
-    youtube = build('youtube', 'v3', developerKey=API_KEY1)
+    youtube = build('youtube', 'v3', developerKey=API_KEY4)
     all_ranking_channel(youtube)
     set = PopularChannelInfo.objects.all()
     return
@@ -457,13 +724,13 @@ def showrankingchannel(request, param):
     pop_chnllist = []
     button_clicked = request.POST.get('button_clicked', '')
     if button_clicked == 'Subscriber':
-        for index in range((int(param)-1)*10, int(param)*10-1):
+        for index in range((int(param)-1)*10, int(param)*10):
             pop_chnllist.append(pop_subsort_chnlist[index])
     elif button_clicked == 'ViewCount':
-        for index in range((int(param)-1)*10, int(param)*10-1):
+        for index in range((int(param)-1)*10, int(param)*10):
             pop_chnllist.append(pop_viewsort_chnlist[index])
     else:
-        for index in range((int(param)-1)*10, int(param)*10-1):
+        for index in range((int(param)-1)*10, int(param)*10):
             pop_chnllist.append(all_chnls[index])
     return render(request, 'category/index.html', context={
         'pop_chnllist': pop_chnllist})

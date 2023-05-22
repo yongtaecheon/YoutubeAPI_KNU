@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-{% load static %}
+{% load i18n %}
+{%load static %}
+{% load account socialaccount %}
+{% providers_media_js %}
+{% get_providers as socialaccount_providers %}
+{% block content %}
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -101,6 +106,12 @@
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
       }
+      .channel-title {
+        display:block;
+        white-space:nowrap;
+        text-overflow:ellipsis;
+        overflow:hidden;
+      }
     </style>
 
     <!-- Custom styles for this template -->
@@ -110,8 +121,9 @@
     <header
       class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow"
     >
-      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="#"
-        >Company name</a
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="/"
+        >
+        Youtube Analyzer</a
       >
       <button
         class="navbar-toggler position-absolute d-md-none collapsed"
@@ -124,15 +136,22 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-      <input
-        class="form-control form-control-dark w-100 rounded-0 border-0"
-        type="text"
-        placeholder="Search"
-        aria-label="Search"
-      />
+      <form class="w-100" action="{% url 'searchchannel' %}" method="POST">
+        {% csrf_token %}
+        <input
+          class="form-control form-control-dark w-100 rounded-0 border-0"
+          type="text"
+          placeholder="Search"
+          aria-label="Search"
+          name="channel_name"
+          id="channel_name"
+        />
+      </form>
       <div class="navbar-nav">
         <div class="nav-item text-nowrap">
-          <a class="nav-link px-3" href="#">Sign out</a>
+          {% if user.is_authenticated %}
+          <a class="nav-link px-3" href="/accounts/logout">Sign out</a>
+          {%endif%}
         </div>
       </div>
     </header>
@@ -146,121 +165,35 @@
           <div class="position-sticky pt-3 sidebar-sticky">
             <ul class="nav flex-column">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">
+                <a class="nav-link" aria-current="page" href="/">
                   <span data-feather="home" class="align-text-bottom"></span>
-                  Dashboard
+                  Home
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#">
-                  <span data-feather="file" class="align-text-bottom"></span>
-                  Orders
+                <a class="nav-link" href="/showrankingchannel/1/">
+                  <span data-feather="bar-chart-2" class="align-text-bottom"></span>
+                  Ranking
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#">
-                  <span
-                    data-feather="shopping-cart"
-                    class="align-text-bottom"
-                  ></span>
-                  Products
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  <span data-feather="users" class="align-text-bottom"></span>
-                  Customers
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  <span
-                    data-feather="bar-chart-2"
-                    class="align-text-bottom"
-                  ></span>
-                  Reports
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="/showTrendList/1/">
                   <span data-feather="layers" class="align-text-bottom"></span>
-                  Integrations
-                </a>
-              </li>
-            </ul>
-
-            <h6
-              class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted text-uppercase"
-            >
-              <span>Saved reports</span>
-              <a class="link-secondary" href="#" aria-label="Add a new report">
-                <span
-                  data-feather="plus-circle"
-                  class="align-text-bottom"
-                ></span>
-              </a>
-            </h6>
-            <ul class="nav flex-column mb-2">
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  <span
-                    data-feather="file-text"
-                    class="align-text-bottom"
-                  ></span>
-                  Current month
+                  Trend List
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#">
-                  <span
-                    data-feather="file-text"
-                    class="align-text-bottom"
-                  ></span>
-                  Last quarter
+                <a class="nav-link active" href="#">
+                  <span data-feather="youtube" class="align-text-bottom"></span>
+                  Channel Search
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  <span
-                    data-feather="file-text"
-                    class="align-text-bottom"
-                  ></span>
-                  Social engagement
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
-                  <span
-                    data-feather="file-text"
-                    class="align-text-bottom"
-                  ></span>
-                  Year-end sale
-                </a>
-              </li>
-            </ul>
           </div>
         </nav>
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
             <h1 class="h2">채널분석 리포트</h1>
-            <div class="btn-toolbar mb-2 mb-md-0">
-              <div class="btn-group me-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary">
-                  Share
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary">
-                  Export
-                </button>
-              </div>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary dropdown-toggle"
-              >
-                <span data-feather="calendar" class="align-text-bottom"></span>
-                This week
-              </button>
-            </div>
           </div>
           {%if chnl %}
           <div class="p-3 mb-4 bg-light border rounded-3" align="center">
@@ -299,18 +232,73 @@
             </div>
           </div>
           {%endif%}
-          <h2><br>채널 비디오 정보</h2>
-          <div class="table-responsive">{{df|safe}}</div>
-          <canvas
-            class="my-4 w-100"
-            id="myChart"
-            width="900"
-            height="380"
-          ></canvas>
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h2><br>채널 레이팅</h2>
+          </div>
+          <p><canvas id="chartjs-radar" class="chartjs-render-monitor" style="display: block; width: 300px; height: 100px;"></canvas></p>
+            <script type="text/javascript">
+              document.addEventListener("DOMContentLoaded", function() {
+                new Chart(document.getElementById("chartjs-radar"), {
+                  type: "radar",
+                  data: {
+                    labels: ["구독자 수", "구독자 충성도", "영상 주기", "영상 평균 조회수", "영상 길이"],
+                    datasets: [{
+                      label: "채널 레이팅",
+                      backgroundColor: "rgba(29, 175, 112, 0.2)",
+                      borderColor: "rgba(29, 175, 112, 1)",
+                      pointBackgroundColor: "rgba(29, 175, 112, 1)",
+                      pointBorderColor: "#fff",
+                      pointHoverBackgroundColor: "#fff",
+                      pointHoverBorderColor: "rgba(29, 175, 112, 1)",
+                      data: [{{rating.0}}, {{rating.1}}, {{rating.2}}, {{rating.3}}, {{rating.4}}]
+                    }]
+                  },
+                  options: {
+                    scales: {
+                      x: {
+                          min: 1,
+                          max: 5
+                      }
+                    }
+                  }
+                });
+              });
+            </script>
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h2><br>채널 비디오 정보</h2>
+          </div>
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+            {%for item in video_result%}
+              <div class="col">
+                <div class="card shadow-sm">
+                  <iframe class="bd-placeholder-img card-img-top" width="100%" height="225" src="https://{{item.7}}"></iframe>
+                  <div class="card-body">
+                    <p class="card-text">
+                      <h6 class="channel-title" align="center">{{item.0}}</h6>
+                      <strong>조회수:</strong> {{ item.3 }}<br>
+                      <strong>좋아요 수:</strong> {{ item.4 }}<br>
+                      <strong>댓글 수:</strong> {{ item.5 }}<br>
+                      <strong>영상 카테고리:</strong> {{item.2}}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='https://{{item.7}}'">Watch on Youtube</button>
+                      <small class="text-muted">게시일: {{ item.6 }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {%endfor%}
+          </div>
+          <br>
+          <a class="link-secondary" align="center" href="https://www.youtube.com/channel/{{chnl.channelID}}"><h6>유튜브에서 영상 더 보기..</h6></a>
+          <br>
         </main>
       </div>
     </div>
 
     <script src="{% static 'js/dashboard.js' %}"></script>
+    {% comment %} <link rel="stylesheet" href="https://unpkg.com/@adminkit/core@latest/dist/css/app.css"> {% endcomment %}
+    <script src="https://unpkg.com/@adminkit/core@latest/dist/js/app.js"></script>
   </body>
 </html>
+{% endblock content %}

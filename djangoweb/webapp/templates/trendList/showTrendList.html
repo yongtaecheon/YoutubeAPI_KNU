@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+{% load i18n %}
+{%load static %}
+{% load account socialaccount %}
+{% providers_media_js %}
+{% get_providers as socialaccount_providers %}
+{% block content %}
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -9,19 +15,13 @@
       content="Mark Otto, Jacob Thornton, and Bootstrap contributors"
     />
     <meta name="generator" content="Hugo 0.108.0" />
-    <title>Jumbotron example · Bootstrap v5.3</title>
+    <title>Dashboard Template · Bootstrap v5.3</title>
 
     <link
       rel="canonical"
-      href="https://getbootstrap.com/docs/5.3/examples/jumbotron/"
+      href="https://getbootstrap.com/docs/5.3/examples/dashboard/"
     />
 
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp"
-      crossorigin="anonymous"
-    />
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N"
@@ -37,6 +37,22 @@
       integrity="sha384-heAjqF+bCxXpCWLa6Zhcp4fu20XoNIA98ecBC1YkdXhszjoejr5y9Q77hIrv8R9i"
       crossorigin="anonymous"
     ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js"
+      integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"
+      integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp"
+      crossorigin="anonymous"
+    />
 
     <style>
       .bd-placeholder-img {
@@ -90,95 +106,148 @@
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
       }
+      .channel-title {
+        display:block;
+        white-space:nowrap;
+        text-overflow:ellipsis;
+        overflow:hidden;
+      }
     </style>
+
+    <!-- Custom styles for this template -->
+    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet" />
   </head>
   <body>
-    <main>
-      <div class="container py-4">
-        <header class="pb-3 mb-4 border-bottom">
-          <a
-            href="/"
-            class="d-flex align-items-center text-dark text-decoration-none"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="40"
-              height="32"
-              class="me-2"
-              viewBox="0 0 118 94"
-              role="img"
-            >
-              <title>Bootstrap</title>
-            </svg>
-  <span class="fs-4"> <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-youtube" viewBox="0 0 16 14">
-        <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/>
-      </svg>Youtube Analyzer</span>
-          </a>
-        </header>
-
-        <body>
-            <style>
-                .trend-item {
-                  border: 1px solid #ccc;
-                  padding: 10px;
-                  margin-bottom: 10px;
-                  list-style-type: none;
-                }
-              </style>
-              <ul class="nav justify-content-center">
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 1%}">1</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 2%}">2</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 3%}">3</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showTrendList' 4%}">4</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 5%}">5</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 6%}">6</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 7%}">7</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showTrendList' 8%}">8</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 9%}">9</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showTrendList' 10%}">10</a>
-                </li>
-              </ul>
-              <h1>Trend List</h1>
-              <ul>
-              {% for item in tl %}
-                <li class="trend-item">
-                  <h3>{{ item.title }}</h3>
-                  <p><strong>Channel:</strong> {{ item.channel_title }}</p>
-                  <p><strong>Views:</strong> {{ item.views }}</p>
-                  <iframe 
-                    width="560" height="315" 
-                    src="https://www.youtube.com/embed/{{item.video_id}}" 
-                    title="YouTube video player" frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; 
-                      encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-                  </iframe>
-                </li>
-              {% endfor %}
-              </ul>
-              
-        </body>
-        <footer class="pt-3 mt-4 text-muted border-top">&copy; 2023 경북대학교 종합설계프로젝트2 - 유튜브 수익분석 사이트</footer>
+    <header
+      class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow"
+    >
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="/"
+        >Youtube Analyzer</a
+      >
+      <button
+        class="navbar-toggler position-absolute d-md-none collapsed"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#sidebarMenu"
+        aria-controls="sidebarMenu"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <form class="w-100" action="{% url 'searchchannel' %}" method="POST">
+        {% csrf_token %}
+        <input
+          class="form-control form-control-dark w-100 rounded-0 border-0"
+          type="text"
+          placeholder="Search"
+          aria-label="Search"
+          name="channel_name"
+          id="channel_name"
+        />
+      </form>
+      <div class="navbar-nav">
+        <div class="nav-item text-nowrap">
+          {% if user.is_authenticated %}
+          <a class="nav-link px-3" href="/accounts/logout">Sign out</a>
+          {%endif%}
+        </div>
       </div>
-    </main>
+    </header>
+      <div class="container-fluid">
+        <div class="row">
+          <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3 sidebar-sticky">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="/">
+                  <span data-feather="home" class="align-text-bottom"></span>
+                  Home
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/showrankingchannel/1/">
+                  <span data-feather="bar-chart-2" class="align-text-bottom"></span>
+                  Ranking
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link active" href="/showTrendList/1/">
+                  <span data-feather="layers" class="align-text-bottom"></span>
+                  Trend List
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/main">
+                  <span data-feather="youtube" class="align-text-bottom"></span>
+                  Channel Search
+                </a>
+              </li>
+            </div>
+          </nav>
+          <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+              <h2>유튜브 인기 트렌드 영상</h2>
+            </div>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+              {%for item in tl%}
+                <div class="col">
+                  <div class="card shadow-sm">
+                    <iframe class="bd-placeholder-img card-img-top" width="100%" height="225" src="https://www.youtube.com/embed/{{item.video_id}}"></iframe>
+                    <div class="card-body">
+                      <p class="card-text">
+                        <h5 class="channel-title" align="center">{{ item.title }}</h5>
+                        <strong>채널명:</strong> {{ item.channel_title }}<br>
+                        <strong>조회수:</strong> {{ item.views }}<br>
+                      </p>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='https://www.youtube.com/watch?v={{item.video_id}}'">Watch on Youtube</button>
+                        {% comment %} <small class="text-muted">게시일: {{ item.6 }}</small> {% endcomment %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {%endfor%}
+            </div>
+            <br>
+            <ul class="nav justify-content-center">
+              <li class="nav-item">
+                <a class="nav-link" href="{%url 'showTrendList' 1%}">1</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{%url 'showTrendList' 2%}">2</a>
+              </li>
+                <li class="nav-item">
+                <a class="nav-link" href="{%url 'showTrendList' 3%}">3</a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showTrendList' 4%}">4</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{%url 'showTrendList' 5%}">5</a>
+              </li>
+              {% comment %} <li class="nav-item">
+                <a class="nav-link" href="{%url 'showTrendList' 6%}">6</a>
+              </li>
+                <li class="nav-item">
+                <a class="nav-link" href="{%url 'showTrendList' 7%}">7</a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showTrendList' 8%}">8</a>
+              </li>
+                <li class="nav-item">
+                <a class="nav-link" href="{%url 'showTrendList' 9%}">9</a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showTrendList' 10%}">10</a>
+              </li> {% endcomment %}
+            </ul>
+            <br>
+          </main>
+        </div>
+      </div>
+    <script src="{% static 'js/dashboard.js' %}"></script>
   </body>
 </html>
 
+{% endblock content %}
