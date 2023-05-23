@@ -34,6 +34,7 @@ class AnalyticsInfo(models.Model):
     subscribersGained = models.BigIntegerField(null=True,default=0)
     subscribersLost = models.BigIntegerField(null=True,default=0)
     estimatedMinutesWatched =  models.BigIntegerField(null=True,default=0)
-    audienceWatchRatio = models.FloatField(null=True,default=0)
-    relativeRetentionPerformance = models.FloatField(null=True,default=0)
+    subscribersViewsRatio = models.FloatField(null=True,default=0)
+    # audienceWatchRatio = models.FloatField(null=True,default=0)
+    # relativeRetentionPerformance = models.FloatField(null=True,default=0)
     

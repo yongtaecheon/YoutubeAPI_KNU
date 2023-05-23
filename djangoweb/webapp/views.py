@@ -1,23 +1,11 @@
 from django.shortcuts import render, redirect
 from .models import ChannelInfo, AnalyticsInfo
-from django.contrib.auth.decorators import login_required
-from oauth2_provider.models import AccessToken, Application
-from datetime import datetime
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from oauth2client.client import OAuth2Credentials
-from django.contrib.auth.models import User
-from .models import CredentialsModel
 from django.http import JsonResponse
 from django.urls import reverse
 
-
 import os
-import datetime
-import re
 import requests
 import pandas as pd
 import json
@@ -27,7 +15,7 @@ import google_auth_oauthlib.flow
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-CLIENT_SECRETS_FILE = "C:/Users/dnjsr/OneDrive/Desktop/project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
+CLIENT_SECRETS_FILE = "C:/Users/dnjsr/Desktop/Project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
 SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",
           "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
           "https://www.googleapis.com/auth/yt-analytics.readonly",
@@ -49,57 +37,60 @@ def api_request(request):
     credentials = google.oauth2.credentials.Credentials(
         **request.session['credentials'])
 
-
     #유튜브 객체 생성
     youtube = googleapiclient.discovery.build(
         API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
-    # #조회수 구독 유무
-    # report = youtube.reports().query(
-    #     ids='channel==MINE',
-    #     metrics='views',
-    #     dimensions='subscribedStatus',
-    #     startDate='2020-05-01',
-    #     endDate='2020-05-10',
-    # ).execute()
-
-    # #쿼리
-    # report = youtube.reports().query(
-    #     ids='channel==MINE',
-    #     startDate='2020-05-01',
-    #     endDate='2020-05-02',
-    #     metrics='views,comments,likes,dislikes,shares,subscribersGained,subscribersLost,estimatedMinutesWatched',
-    #     dimensions='day',
-    #     sort='day'
-    #     ).execute()
-
-    # #DB 저장
-    # AnalyticsData=AnalyticsInfo()
-    # data_row = report["rows"]
-  
-    # for row in data_row:
-    #     AnalyticsData.channel_id = get_my_Channel(request)
-    #     AnalyticsData.date = row[0]
-    #     AnalyticsData.views = row[1]
-    #     AnalyticsData.comments = row[2]
-    #     AnalyticsData.likes = row[3]
-    #     AnalyticsData.dislikes = row[4]
-    #     AnalyticsData.shares =row[5]
-    #     AnalyticsData.subscribersGained=row[6]
-    #     AnalyticsData.subscribersLost=row[7]
-    #     AnalyticsData.estimatedMinutesWatched=row[8]
-    #     # AnalyticsData.audienceWatchRatio=row[8]
-    #     # AnalyticsData.relativeRetentionPerformance=row[9]
-    #     AnalyticsData.save()
-    
+    #조회수 구독 유무
     report = youtube.reports().query(
-        dimensions="elapsedVideoTimeRatio",
-        endDate="2022-06-30",
-        filters="video==KbQCYTLgLGM;audienceType==ORGANIC",
-        ids="channel==MINE",
-        metrics="audienceWatchRatio,relativeRetentionPerformance",
-        startDate="2022-01-01"
+        ids='channel==MINE',
+        metrics='views',
+        dimensions='subscribedStatus',
+        startDate='2020-05-01',
+        endDate='2020-05-10',
     ).execute()
+    
+    #DB저장
+    AnalyticsData=AnalyticsInfo()
+    data_row = report["rows"]
+    print(float(data_row[1][1]) / float(data_row[0][1]))
+    AnalyticsData.subscribersViewsRatio =  float(data_row[1][1]) / float(data_row[0][1])
+
+    #쿼리
+    report = youtube.reports().query(
+        ids='channel==MINE',
+        startDate='2020-05-01',
+        endDate='2020-05-02',
+        metrics='views,comments,likes,dislikes,shares,subscribersGained,subscribersLost,estimatedMinutesWatched',
+        dimensions='day',
+        sort='day'
+    ).execute()
+
+    #DB 저장
+    data_row = report["rows"]
+    
+    for row in data_row:
+        AnalyticsData.channel_id = get_my_Channel(request)
+        AnalyticsData.date = row[0]
+        AnalyticsData.views = row[1]
+        AnalyticsData.comments = row[2]
+        AnalyticsData.likes = row[3]
+        AnalyticsData.dislikes = row[4]
+        AnalyticsData.shares =row[5]
+        AnalyticsData.subscribersGained=row[6]
+        AnalyticsData.subscribersLost=row[7]
+        AnalyticsData.estimatedMinutesWatched=row[8]
+        AnalyticsData.save()
+    
+    # #비디오 진행도에 따른 시청자 유지 능력 측정
+    # report = youtube.reports().query(
+    #     dimensions="elapsedVideoTimeRatio",
+    #     endDate="2022-06-30",
+    #     filters="video==KbQCYTLgLGM;audienceType==ORGANIC",
+    #     ids="channel==MINE",
+    #     metrics="audienceWatchRatio,relativeRetentionPerformance",
+    #     startDate="2022-01-01"
+    # ).execute()
     
     # 세션에 credential 정보 저장
     request.session['credentials'] = credentials_to_dict(credentials)
@@ -110,7 +101,7 @@ def authorize(request):
       # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
     flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, scopes=SCOPES)
-  
+
     flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
 
     authorization_url, state = flow.authorization_url(
@@ -137,7 +128,7 @@ def oauth2callback(request):
   # Use the authorization server's response to fetch the OAuth 2.0 tokens.
     authorization_response = request.build_absolute_uri()
     flow.fetch_token(authorization_response=authorization_response)
-  
+
     credentials = flow.credentials
     request.session['credentials'] = credentials_to_dict(credentials)
 
