@@ -182,6 +182,7 @@ def get_my_Channel(request):
     except HttpError as e:
         print("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
     
+    
 def print_index_table(request):
     return render(request, "test/index.html")
 
