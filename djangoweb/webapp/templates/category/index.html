@@ -293,6 +293,13 @@
                         영화
                       </label>
                     </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="없음" id="cat14" checked>
+                      <label class="form-check-label" for="cat14">
+                        <i class="bi bi-camera-reels"></i>
+                        선택없음
+                      </label>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -325,39 +332,61 @@
               <li class="nav-item">
                 <a class="nav-link" href="{%url 'showrankingchannel' 1%}">1</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{%url 'showrankingchannel' 2%}">2</a>
-              </li>
+              {% if indexcount >= 2 %}
                 <li class="nav-item">
-                <a class="nav-link" href="{%url 'showrankingchannel' 3%}">3</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showrankingchannel' 4%}">4</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{%url 'showrankingchannel' 5%}">5</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{%url 'showrankingchannel' 6%}">6</a>
-              </li>
+                  <a class="nav-link" href="{%url 'showrankingchannel' 2%}">2</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 3 %}
                 <li class="nav-item">
-                <a class="nav-link" href="{%url 'showrankingchannel' 7%}">7</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showrankingchannel' 8%}">8</a>
-              </li>
+                  <a class="nav-link" href="{%url 'showrankingchannel' 3%}">3</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 4 %}
                 <li class="nav-item">
-                <a class="nav-link" href="{%url 'showrankingchannel' 9%}">9</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showrankingchannel' 10%}">10</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showrankingchannel' 11%}">11</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showrankingchannel' 12%}">12</a>
-              </li>
+                    <a class="nav-link" href="{%url 'showrankingchannel' 4%}">4</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 5 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 5%}">5</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 6 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 6%}">6</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 7 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 7%}">7</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 8 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 8%}">8</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 9 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 9%}">9</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 10 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 10%}">10</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 11 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 11%}">11</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 12 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 12%}">12</a>
+                </li>
+              {% endif %}
             </ul>
             <br>
           </main>

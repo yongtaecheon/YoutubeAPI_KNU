@@ -5,7 +5,7 @@ import os
 import re
 import pandas as pd
 import json
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from django.db.models import Q
@@ -22,6 +22,7 @@ API_KEY5 = 'AIzaSyB5nnPCXwDu3BWpCQxcrpa8mdJYqBZANjQ'
 
 Categoryid = {'1': "애니메이션", '2': "자동차", '10': "음악", '15': "동물", '17': "스포츠", '20': "게임",
               '22': "블로그", '23': "코미디", '24': "엔터테인먼트", '25': "뉴스_정치", '26': "스타일", '27': "교육", '28': "과학_기술", '30': "영화"}
+
 
 def home(request):
     return render(request, 'cover/index.html')
@@ -179,6 +180,7 @@ def is_three_months_ago(time_str):
     else:
         return False
 
+
 def time_to_seconds(time_str):
     # 'PT#M#S' 형식에서 분과 초를 추출하여 변환
     minutes = 0
@@ -202,6 +204,7 @@ def time_to_seconds(time_str):
     total_seconds = minutes_to_seconds + seconds
 
     return total_seconds
+
 
 def searchchannel(request):
     chnl = ChannelInfo()
@@ -275,39 +278,39 @@ def searchchannel(request):
             ).execute()
             for item in search_response["items"]:
                 video_ids.append(item["id"]["videoId"])
-    
+
     for video_id in video_ids:
         video_info = []
         video_response = youtube.videos().list(
             part='snippet, statistics, player, contentDetails', id=video_id).execute()
         video_info.append(
-            video_response['items'][0]['snippet']['title']) #0 : title
+            video_response['items'][0]['snippet']['title'])  # 0 : title
         video_title.append(
             video_response['items'][0]['snippet']['title'])  # 0 : title
-        
+
         video_info.append(
-            video_response['items'][0]['snippet']['thumbnails']['high']['url']) #1: 썸네일
-        
+            video_response['items'][0]['snippet']['thumbnails']['high']['url'])  # 1: 썸네일
+
         video_info.append(
-            Categoryid[video_response['items'][0]['snippet']['categoryId']]) #2: 카테고리 번호
-        
+            Categoryid[video_response['items'][0]['snippet']['categoryId']])  # 2: 카테고리 번호
+
         video_info.append(
-            video_response['items'][0]['statistics']['viewCount']) #3: 조회수
+            video_response['items'][0]['statistics']['viewCount'])  # 3: 조회수
         video_views.append(
             video_response['items'][0]['statistics']['viewCount'])  # 3: 조회수
-        
+
         video_info.append(
             video_response['items'][0]['statistics']['likeCount'])  # 4: 좋아요수
         video_likes.append(
-            video_response['items'][0]['statistics']['likeCount']) #4: 좋아요수
+            video_response['items'][0]['statistics']['likeCount'])  # 4: 좋아요수
         try:
-            video_info.append(video_response['items'] #5: 댓글 수
-                                    [0]['statistics']['commentCount'])
+            video_info.append(video_response['items']  # 5: 댓글 수
+                              [0]['statistics']['commentCount'])
         except:
             video_info.append('댓글 중지 상태')
-        video_info.append( #6: 게시일
+        video_info.append(  # 6: 게시일
             video_response['items'][0]['snippet']['publishedAt'])
-        
+
         video_info.append(
             re.findall(r'www.youtube.com/embed/[\w\W\s\S]{11}', video_response['items'][0]['player']['embedHtml'])[0])
 
@@ -319,7 +322,7 @@ def searchchannel(request):
         if (is_three_months_ago(publish_date_str)):  # 조건 달것 3개월 이네
             rated_video.append(len(video_title)-1)
         video_result.append(video_info)
-        
+
     # 채널 평점
     # 구독자 수 1번
     if (len(rated_video)):
@@ -413,11 +416,12 @@ def searchchannel(request):
     # 채널평점 끝
     for i in range(5):
         rating[i] = round(rating[i], 2)
-    print("<평점>\n", "구독자 수: ",rating[0], ", 구독자 충성도: ",rating[1],", 영상 주기:", rating[2], ", 영상평균조회수: ",rating[3], ", 영상길이: ",rating[4])
+    print("<평점>\n", "구독자 수: ", rating[0], ", 구독자 충성도: ", rating[1],
+          ", 영상 주기:", rating[2], ", 영상평균조회수: ", rating[3], ", 영상길이: ", rating[4])
     now = datetime.now()
     chnl.LoadDate = now.strftime('%Y%m%d')
     chnl.save()
-    return render(request, 'dashboard/index.html', context={'chnl': chnl, 'video_result': video_result, 'rating':rating})
+    return render(request, 'dashboard/index.html', context={'chnl': chnl, 'video_result': video_result, 'rating': rating})
 
 
 def makeTrendList():
@@ -709,31 +713,69 @@ def make_rankingchannel():
     return
 
 
+def savedata(request, param):
+    request.session['param'] = param
+    return redirect('showrankingchannel')
+
+
 def showrankingchannel(request, param):
     date = datetime.now().strftime('%Y%m%d')
     categorys = []
+    if 'indexcount' not in request.session:
+        indexcount = 12
+        request.session['indexcount'] = indexcount
     if request.method == 'POST':
         if 'category' in request.POST:
             categorys = request.POST.getlist("category")
-            print(categorys)
+        request.session['categorys'] = categorys
+    else:
+        categorys = request.session.get('categorys')
+        request.session['categorys'] = categorys
     all_chnls = PopularChannelInfo.objects.filter(LoadDate=date)
-    if categorys:
+    if categorys and '없음' not in categorys:
         all_chnls = all_chnls.filter(channel_category__in=categorys)
     pop_subsort_chnlist = all_chnls.order_by('ranking_subscribers')
     pop_viewsort_chnlist = all_chnls.order_by('ranking_viewcounters')
     pop_chnllist = []
-    button_clicked = request.POST.get('button_clicked', '')
-    if button_clicked == 'Subscriber':
-        for index in range((int(param)-1)*10, int(param)*10):
-            pop_chnllist.append(pop_subsort_chnlist[index])
-    elif button_clicked == 'ViewCount':
-        for index in range((int(param)-1)*10, int(param)*10):
-            pop_chnllist.append(pop_viewsort_chnlist[index])
+    if request.method == 'POST':
+        button_clicked = request.POST.get('button_clicked', '')
+        request.session['button_clicked'] = button_clicked
     else:
+        button_clicked = request.session.get('button_clicked')
+        request.session['button_clicked'] = button_clicked
+
+    if button_clicked == 'Subscriber':
+        if len(pop_subsort_chnlist) % 10 != 0:
+            indexcount = int(len(pop_subsort_chnlist)/10) + 1
+        elif len(pop_subsort_chnlist) % 10 == 0:
+            indexcount = int(len(pop_subsort_chnlist)/10)
+        request.session['indexcount'] = indexcount
         for index in range((int(param)-1)*10, int(param)*10):
-            pop_chnllist.append(all_chnls[index])
+            if index < len(pop_subsort_chnlist):
+                pop_chnllist.append(pop_subsort_chnlist[index])
+    elif button_clicked == 'ViewCount':
+        if len(pop_viewsort_chnlist) % 10 != 0:
+            indexcount = int(len(pop_viewsort_chnlist)/10) + 1
+        elif len(pop_viewsort_chnlist) % 10 == 0:
+            indexcount = int(len(pop_viewsort_chnlist)/10)
+        request.session['indexcount'] = indexcount
+        for index in range((int(param)-1)*10, int(param)*10):
+            if index < len(pop_viewsort_chnlist):
+                pop_chnllist.append(pop_viewsort_chnlist[index])
+    else:
+        if len(all_chnls) % 10 != 0:
+            indexcount = int(len(all_chnls)/10) + 1
+        elif len(all_chnls) % 10 == 0:
+            indexcount = int (len(all_chnls) / 10)
+        for index in range((int(param)-1) * 10, int(param) * 10):
+            if index<len(all_chnls):
+                pop_chnllist.append(all_chnls[index])
+                request.session['indexcount']=indexcount
+
+    print(indexcount, request.session['indexcount'])
+
     return render(request, 'category/index.html', context={
-        'pop_chnllist': pop_chnllist})
+        'pop_chnllist': pop_chnllist, 'indexcount': indexcount})
 
 
 def updateDB(request):
