@@ -1,17 +1,35 @@
 from django.shortcuts import render, redirect
-from .models import ChannelInfo, PopularChannelInfo, TrendList
+from .models import ChannelInfo, PopularChannelInfo, TrendList, AnalyticsInfo
 
-import os
-import re
-import pandas as pd
-import json
 from datetime import datetime, timedelta
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from django.db.models import Q
 
+from django.http import JsonResponse
+from django.urls import reverse
+
+import os
+import requests
+import re
+import pandas as pd
+import json
+import google.oauth2.credentials
+import googleapiclient.discovery
+import google_auth_oauthlib.flow
+
+#http로 실행했을 때 오류 방지
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Create your views here.
+
+CLIENT_SECRETS_FILE = "C:/Users/dnjsr/Desktop/Project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
+SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
+          "https://www.googleapis.com/auth/yt-analytics.readonly",
+          "https://www.googleapis.com/auth/youtube.readonly"]
+ANALYTICS_API = 'youtubeAnalytics'
+ANALYTICS_VERSION = 'v2'
 
 # API 키를 입력
 API_KEY1 = 'AIzaSyCcis4wzheGUE8j9hRQ9xp43w7LREedD6M'
@@ -162,6 +180,170 @@ def dashboard(request):
 #         chnl.LoadDate = now.strftime('%Y%m%d')
 #         chnl.save()
 #     return render(request, 'dashboard/index.html', context={'chnl': chnl, 'df_html': df_html, 'video_embed':video_embed ,'video_result':video_result, 'df':df})
+
+def api_request(request):
+    #세션에 credentials 정보가 없다면 authorize로 이동하여 생성
+    if 'credentials' not in request.session:
+        return redirect('authorize')
+
+  # 세션에서 credentials 정보 읽어오기
+    credentials = google.oauth2.credentials.Credentials(
+        **request.session['credentials'])
+
+    #유튜브 객체 생성
+    youtube = googleapiclient.discovery.build(
+        ANALYTICS_API, ANALYTICS_VERSION, credentials=credentials)
+
+    #조회수 구독 유무
+    report = youtube.reports().query(
+        ids='channel==MINE',
+        metrics='views',
+        dimensions='subscribedStatus',
+        startDate='2020-05-01',
+        endDate='2020-05-10',
+    ).execute()
+    
+    #DB저장
+    AnalyticsData=AnalyticsInfo()
+    data_row = report["rows"]
+    print(float(data_row[1][1]) / float(data_row[0][1]))
+    AnalyticsData.subscribersViewsRatio =  float(data_row[1][1]) / float(data_row[0][1])
+
+    #쿼리
+    report = youtube.reports().query(
+        ids='channel==MINE',
+        startDate='2020-05-01',
+        endDate='2020-05-02',
+        metrics='views,comments,likes,dislikes,shares,subscribersGained,subscribersLost,estimatedMinutesWatched',
+        dimensions='day',
+        sort='day'
+    ).execute()
+
+    #DB 저장
+    data_row = report["rows"]
+    
+    for row in data_row:
+        AnalyticsData.channel_id = get_my_Channel(request)
+        AnalyticsData.date = row[0]
+        AnalyticsData.views = row[1]
+        AnalyticsData.comments = row[2]
+        AnalyticsData.likes = row[3]
+        AnalyticsData.dislikes = row[4]
+        AnalyticsData.shares =row[5]
+        AnalyticsData.subscribersGained=row[6]
+        AnalyticsData.subscribersLost=row[7]
+        AnalyticsData.estimatedMinutesWatched=row[8]
+        AnalyticsData.save()
+    
+    # #비디오 진행도에 따른 시청자 유지 능력 측정
+    # report = youtube.reports().query(
+    #     dimensions="elapsedVideoTimeRatio",
+    #     endDate="2022-06-30",
+    #     filters="video==KbQCYTLgLGM;audienceType==ORGANIC",
+    #     ids="channel==MINE",
+    #     metrics="audienceWatchRatio,relativeRetentionPerformance",
+    #     startDate="2022-01-01"
+    # ).execute()
+    
+    # 세션에 credential 정보 저장
+    request.session['credentials'] = credentials_to_dict(credentials)
+
+    return JsonResponse(report)
+
+#Google 인증 받기
+def authorize(request):
+      # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE, scopes=SCOPES)
+
+    flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
+
+    authorization_url, state = flow.authorization_url(
+        # Enable offline access so that you can refresh an access token without
+        # re-prompting the user for permission. Recommended for web server apps.
+        access_type='offline',
+        # Enable incremental authorization. Recommended as a best practice.
+        include_granted_scopes='true')
+
+  # Store the state so the callback can verify the auth server response.
+    request.session['state'] = state
+
+    return redirect(authorization_url)
+
+#Google 인증받기
+def oauth2callback(request):
+  # Specify the state when creating the flow in the callback so that it can
+  # verified in the authorization server response.
+    state = request.session['state']
+
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
+    flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
+
+  # Use the authorization server's response to fetch the OAuth 2.0 tokens.
+    authorization_response = request.build_absolute_uri()
+    flow.fetch_token(authorization_response=authorization_response)
+
+    credentials = flow.credentials
+    request.session['credentials'] = credentials_to_dict(credentials)
+
+    return redirect(reverse('api_request'))
+
+#해당 인증 취소 / 회원 탈퇴 느낌
+def revoke(request):
+    if 'credentials' not in request.session:
+        return render(request, "test/notAuthorize.html")
+
+    credentials = google.oauth2.credentials.Credentials(
+        **request.session['credentials'])
+
+    revoke = requests.post('https://oauth2.googleapis.com/revoke',
+        params={'token': credentials.token},
+        headers = {'content-type': 'application/x-www-form-urlencoded'})
+
+    status_code = getattr(revoke, 'status_code')
+    if status_code == 200:
+        return render(request, 'Credentials successfully revoked.' + print_index_table())
+    else:
+        return render(request, 'An error occurred.' + print_index_table())
+
+#세션에 인증 비우기 / 로그 아웃
+def clear_credentials(request):
+    if 'credentials' in request.session:
+        del request.session['credentials']
+    return render(request,"test/cleared.html")
+
+#인증서 내용 딕셔너리로 변환
+def credentials_to_dict(credentials):
+    return {'token': credentials.token,
+            'refresh_token': credentials.refresh_token,
+            'token_uri': credentials.token_uri,
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'scopes': credentials.scopes}
+
+#인증된 계정의 ID 반환
+def get_my_Channel(request):
+    credentials = google.oauth2.credentials.Credentials(
+        **request.session['credentials'])
+    youtube = googleapiclient.discovery.build(
+        "youtube", "v3", credentials=credentials)
+    try:
+        channels_response = youtube.channels().list(
+            part="id",
+            mine=True
+        ).execute()
+
+        channel_id = channels_response["items"][0]["id"]
+        print("내채널 ID:"+channel_id)
+        return channel_id
+
+    except HttpError as e:
+        print("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
+
+#테스트용 페이지
+def print_index_table(request):
+    return render(request, "test/index.html")
+
 
 def is_three_months_ago(time_str):
     # 현재 시간 가져오기

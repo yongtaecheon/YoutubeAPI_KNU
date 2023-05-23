@@ -28,5 +28,11 @@ urlpatterns = [
     path('showTrendList/<int:param>/',
          webapp.views.showTrendList, name='showTrendList'),
     path('showrankingchannel/<int:param>/',
-         webapp.views.showrankingchannel, name='showrankingchannel')
-]
+         webapp.views.showrankingchannel, name='showrankingchannel'),
+    path('api_request/', webapp.views.api_request, name = 'api_request'),
+    path('oauth2callback/', webapp.views.oauth2callback, name = 'oauth2callback'),
+    path('authorize/', webapp.views.authorize, name = 'authorize'),
+    path('revoke/', webapp.views.revoke, name = 'revoke'),
+    path('clear_credentials/', webapp.views.clear_credentials, name = 'clear_credentials'),
+    path('print_index_table/', webapp.views.print_index_table, name = 'print_index_table'),
+    ]
