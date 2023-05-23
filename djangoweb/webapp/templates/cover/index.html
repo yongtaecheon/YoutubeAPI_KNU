@@ -1,7 +1,10 @@
 <!DOCTYPE html>
+{% load i18n %}
 {%load static %}
-{% load socialaccount %}
+{% load account socialaccount %}
 {% providers_media_js %}
+{% get_providers as socialaccount_providers %}
+{% block content %}
 <html lang="en" class="h-100">
   <head>
     <meta charset="utf-8" />
@@ -12,7 +15,7 @@
       content="Mark Otto, Jacob Thornton, and Bootstrap contributors"
     />
     <meta name="generator" content="Hugo 0.108.0" />
-    <title>Cover Template · Bootstrap v5.3</title>
+    <title>Youtube Analyzer</title>
 
     <link
       rel="canonical"
@@ -98,29 +101,21 @@
     <link href="{% static 'css/cover.css' %}" rel="stylesheet" />
   </head>
   <body class="d-flex h-100 text-center text-bg-dark">
-    
     <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
       <header class="mb-auto">
         <div>
-          <h3 class="float-md-start mb-0">Youtube Analyzer</h3>
-          <nav class="nav nav-masthead justify-content-center float-md-end">
-            <a
-              class="nav-link fw-bold py-1 px-0 active"
-              aria-current="page"
-              href="#"
-              >Home</a>
-            <a class="nav-link fw-bold py-1 px-0" href="#">Features</a>
-            <a class="nav-link fw-bold py-1 px-0" href="#">Contact</a>
-          <nav/>
-          <div class="justify-content-end">
-            {% if user.is_authenticated %}
-            <strong>{{user.username}}님 반갑습니다.</strong>
-            <a href="/accounts/logout">로그아웃</a>
-            {% else %}
-            <a class="nav-link fw-bold py-1 px-0" href="/login">Sign in</a>
-            <a href="/accounts/signup">회원가입</a>
-            {% endif %}
-          </div>
+          <h3 class="float-md-start mb-0"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-youtube" viewBox="0 0 16 16">
+          <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/>
+          </svg> Youtube Analyzer</h3>
+            <nav class="nav nav-masthead justify-content-center float-md-end">
+              <a class="nav-link fw-bold py-1 px-2 active" aria-current="page" href="#">Home</a>
+              {% if user.is_authenticated %}
+              <form method="post" action="/accounts/logout/">{%csrf_token%} <button class="nav-link fw-bold py-1 px-0" type="submit">Logout</button> </form>
+              <a class="nav-link fw-bold py-1 px-2 disabled" style="color:white">{{user.username}} 님이 로그인 중</a>
+              {% else %}
+              <a class="nav-link fw-bold py-1 px-2" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+              {% endif %}
+          </nav>
         </div>
       </header>
 
@@ -130,22 +125,71 @@
           당신의 채널, 또는 다른 유튜버의 채널을 검색하고 분석해 보세요.<br>또한 유튜브에 인기 급상승하는 데이터들을 보여줍니다.
         </p>
         <p class="lead">
-          <a
-            href="#"
-            class="btn btn-lg btn-light fw-bold border-white bg-white"
-            onclick="location.href='/api_request';"
-            >Search</a
-          >
+          <a href="#" class="btn btn-lg btn-light fw-bold border-white bg-white" onclick="location.href='/main';">Search</a>
         </p>
       </main>
 
       <footer class="mt-auto text-white-50">
         <p>
-          Cover template for
-          <a href="https://getbootstrap.com/" class="text-white">Bootstrap</a>,
-          by <a href="https://twitter.com/mdo" class="text-white">@mdo</a>.
+          2023 경북대학교 종합설계프로젝트2 - 유튜브API분석 웹 어플리케이션
         </p>
       </footer>
     </div>
   </body>
-</html>
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="color:black">
+    <div class="modal-dialog">
+      <div class="modal-content rounded-4">
+        <div class="modal-header p-5 pb-4 border-bottom-0">
+          <h1 class="h3 mb-3 fw-normal">로그인이 필요합니다.</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-5 pt-0">
+          {% if user.is_authenticated %}
+          <a href="/accounts/logout">로그아웃</a>
+          <br>
+          {{user.username}} 님이 로그인 중
+          {% else %}
+            <form class="login" method="POST" action="{% url 'account_login' %}">
+              {% csrf_token %}
+              <div class="form-floating">
+                <input name="login" type="text" class="form-control" id="floatingInput" placeholder="ID" required id="id_login"> 
+                <label for="floatingInput">아이디</label>
+              </div>
+              <div class="form-floating">
+                <input name="password" type="password" class="form-control" id="floatingPassword" placeholder="Password" required id="id_password"> 
+                <label for="floatingPassword">비밀번호</label>
+              </div>
+              {% if redirect_field_value %}
+              <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+              {% endif %}
+              {% comment %} <a class="button secondaryAction" href="/accounts/password/reset/">비밀번호 찾기</a> {% endcomment %}
+              <div class="checkbox mb-3">
+                <label>
+                  <input type="checkbox" value="remember-me" id="id_remember"> 계정 기억하기
+                </label>
+              </div>
+              <button class="w-100 btn btn-dark py-2 mb-2" type="submit">로그인</button>
+            </form>
+            <button class="w-100 btn btn-dark py-2" onclick="location.href='/accounts/signup'">회원가입</button>
+            <hr class="my-4">
+            <form method="post" action="{%provider_login_url 'google' %}">
+              {% csrf_token %}
+              <button class="w-100 py-2 mb-2 btn btn-danger rounded-3" type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-youtube" viewBox="0 0 16 16">
+                  <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/>
+                </svg>
+                  유튜브로 로그인
+              </button>
+            </form>
+            {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  </html>
+  
+
+{% endblock content %}
