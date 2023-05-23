@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import ChannelInfo
+from .models import ChannelInfo, AnalyticsInfo
 from django.contrib.auth.decorators import login_required
 from oauth2_provider.models import AccessToken, Application
 from datetime import datetime
@@ -27,103 +27,172 @@ import google_auth_oauthlib.flow
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-CLIENT_SECRETS_FILE = "C:/Users/dnjsr/Desktop/Project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
+CLIENT_SECRETS_FILE = "C:/Users/dnjsr/OneDrive/Desktop/project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
 SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",
           "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
-          "https://www.googleapis.com/auth/yt-analytics.readonly"]
+          "https://www.googleapis.com/auth/yt-analytics.readonly",
+          "https://www.googleapis.com/auth/youtube.readonly"]
 API_SERVICE_NAME = 'youtubeAnalytics'
 API_VERSION = 'v2'
+# API 키를 입력
+API_KEY1 = 'AIzaSyCcis4wzheGUE8j9hRQ9xp43w7LREedD6M'
+API_KEY2 = 'AIzaSyCybUkLvjkdaWFgdc7GtVdnn-vgal0g0mg'
+API_KEY3 = 'AIzaSyD1mS8iqeHOniuebnom3cFT_yVG1VI1odA'
+API_KEY4 = 'AIzaSyDUHIwJ74tT7n6bdzokkHIhiET4ZQFI88M'
 
 def api_request(request):
     #세션에 credentials 정보가 없다면 authorize로 이동하여 생성
-  if 'credentials' not in request.session:
-    return redirect('authorize')
+    if 'credentials' not in request.session:
+        return redirect('authorize')
 
   # 세션에서 credentials 정보 읽어오기
-  credentials = google.oauth2.credentials.Credentials(
-      **request.session['credentials'])
+    credentials = google.oauth2.credentials.Credentials(
+        **request.session['credentials'])
+
 
     #유튜브 객체 생성
-  youtube = googleapiclient.discovery.build(
-      API_SERVICE_NAME, API_VERSION, credentials=credentials)
+    youtube = googleapiclient.discovery.build(
+        API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
-    #api request
-  report = youtube.reports().query(ids='channel==MINE', startDate='2020-05-01', endDate='2021-06-30', metrics='views').execute()
+    # #조회수 구독 유무
+    # report = youtube.reports().query(
+    #     ids='channel==MINE',
+    #     metrics='views',
+    #     dimensions='subscribedStatus',
+    #     startDate='2020-05-01',
+    #     endDate='2020-05-10',
+    # ).execute()
 
-  # 세션에 credential 정보 저장
-  request.session['credentials'] = credentials_to_dict(credentials)
+    # #쿼리
+    # report = youtube.reports().query(
+    #     ids='channel==MINE',
+    #     startDate='2020-05-01',
+    #     endDate='2020-05-02',
+    #     metrics='views,comments,likes,dislikes,shares,subscribersGained,subscribersLost,estimatedMinutesWatched',
+    #     dimensions='day',
+    #     sort='day'
+    #     ).execute()
 
-  return JsonResponse(report)
+    # #DB 저장
+    # AnalyticsData=AnalyticsInfo()
+    # data_row = report["rows"]
+  
+    # for row in data_row:
+    #     AnalyticsData.channel_id = get_my_Channel(request)
+    #     AnalyticsData.date = row[0]
+    #     AnalyticsData.views = row[1]
+    #     AnalyticsData.comments = row[2]
+    #     AnalyticsData.likes = row[3]
+    #     AnalyticsData.dislikes = row[4]
+    #     AnalyticsData.shares =row[5]
+    #     AnalyticsData.subscribersGained=row[6]
+    #     AnalyticsData.subscribersLost=row[7]
+    #     AnalyticsData.estimatedMinutesWatched=row[8]
+    #     # AnalyticsData.audienceWatchRatio=row[8]
+    #     # AnalyticsData.relativeRetentionPerformance=row[9]
+    #     AnalyticsData.save()
+    
+    report = youtube.reports().query(
+        dimensions="elapsedVideoTimeRatio",
+        endDate="2022-06-30",
+        filters="video==KbQCYTLgLGM;audienceType==ORGANIC",
+        ids="channel==MINE",
+        metrics="audienceWatchRatio,relativeRetentionPerformance",
+        startDate="2022-01-01"
+    ).execute()
+    
+    # 세션에 credential 정보 저장
+    request.session['credentials'] = credentials_to_dict(credentials)
+
+    return JsonResponse(report)
 
 def authorize(request):
       # Create flow instance to manage the OAuth 2.0 Authorization Grant Flow steps.
-  flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-      CLIENT_SECRETS_FILE, scopes=SCOPES)
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE, scopes=SCOPES)
   
-  flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
+    flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
 
-  authorization_url, state = flow.authorization_url(
-      # Enable offline access so that you can refresh an access token without
-      # re-prompting the user for permission. Recommended for web server apps.
-      access_type='offline',
-      # Enable incremental authorization. Recommended as a best practice.
-      include_granted_scopes='true')
+    authorization_url, state = flow.authorization_url(
+        # Enable offline access so that you can refresh an access token without
+        # re-prompting the user for permission. Recommended for web server apps.
+        access_type='offline',
+        # Enable incremental authorization. Recommended as a best practice.
+        include_granted_scopes='true')
 
   # Store the state so the callback can verify the auth server response.
-  request.session['state'] = state
+    request.session['state'] = state
 
-  return redirect(authorization_url)
+    return redirect(authorization_url)
 
 
 def oauth2callback(request):
   # Specify the state when creating the flow in the callback so that it can
   # verified in the authorization server response.
-  state = request.session['state']
+    state = request.session['state']
 
-  flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
-  flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
+    flow.redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
 
   # Use the authorization server's response to fetch the OAuth 2.0 tokens.
-  authorization_response = request.build_absolute_uri()
-  flow.fetch_token(authorization_response=authorization_response)
+    authorization_response = request.build_absolute_uri()
+    flow.fetch_token(authorization_response=authorization_response)
   
-  credentials = flow.credentials
-  request.session['credentials'] = credentials_to_dict(credentials)
+    credentials = flow.credentials
+    request.session['credentials'] = credentials_to_dict(credentials)
 
-  return redirect(reverse('api_request'))
+    return redirect(reverse('api_request'))
 
 def revoke(request):
-  if 'credentials' not in request.session:
-    return render(request, "test/notAuthorize.html")
+    if 'credentials' not in request.session:
+        return render(request, "test/notAuthorize.html")
 
-  credentials = google.oauth2.credentials.Credentials(
-    **request.session['credentials'])
+    credentials = google.oauth2.credentials.Credentials(
+        **request.session['credentials'])
 
-  revoke = requests.post('https://oauth2.googleapis.com/revoke',
-      params={'token': credentials.token},
-      headers = {'content-type': 'application/x-www-form-urlencoded'})
+    revoke = requests.post('https://oauth2.googleapis.com/revoke',
+        params={'token': credentials.token},
+        headers = {'content-type': 'application/x-www-form-urlencoded'})
 
-  status_code = getattr(revoke, 'status_code')
-  if status_code == 200:
-    return render(request, 'Credentials successfully revoked.' + print_index_table())
-  else:
-    return render(request, 'An error occurred.' + print_index_table())
+    status_code = getattr(revoke, 'status_code')
+    if status_code == 200:
+        return render(request, 'Credentials successfully revoked.' + print_index_table())
+    else:
+        return render(request, 'An error occurred.' + print_index_table())
 
 def clear_credentials(request):
-  if 'credentials' in request.session:
-    del request.session['credentials']
-  return render(request,"test/cleared.html")
+    if 'credentials' in request.session:
+        del request.session['credentials']
+    return render(request,"test/cleared.html")
 
 def credentials_to_dict(credentials):
-  return {'token': credentials.token,
-          'refresh_token': credentials.refresh_token,
-          'token_uri': credentials.token_uri,
-          'client_id': credentials.client_id,
-          'client_secret': credentials.client_secret,
-          'scopes': credentials.scopes}
+    return {'token': credentials.token,
+            'refresh_token': credentials.refresh_token,
+            'token_uri': credentials.token_uri,
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'scopes': credentials.scopes}
 
+def get_my_Channel(request):
+    credentials = google.oauth2.credentials.Credentials(
+        **request.session['credentials'])
+    youtube = googleapiclient.discovery.build(
+        "youtube", "v3", credentials=credentials)
+    try:
+        channels_response = youtube.channels().list(
+            part="id",
+            mine=True
+        ).execute()
+
+        channel_id = channels_response["items"][0]["id"]
+        print("내채널 ID:"+channel_id)
+        return channel_id
+
+    except HttpError as e:
+        print("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
+    
 def print_index_table(request):
-      return render(request, "test/index.html")
+    return render(request, "test/index.html")
 
 # Create your views here.
 def home(request):
@@ -142,10 +211,6 @@ def searchchannel(request):
     if request.method == 'POST':
         chnl = ChannelInfo()
         chnl.channel_name = request.POST['channel_name']
-        # API 키를 입력
-        API_KEY1 = 'AIzaSyCcis4wzheGUE8j9hRQ9xp43w7LREedD6M'
-        API_KEY2 = 'AIzaSyCybUkLvjkdaWFgdc7GtVdnn-vgal0g0mg'
-        API_KEY3 = 'AIzaSyD1mS8iqeHOniuebnom3cFT_yVG1VI1odA'
 
         # YouTube API 클라이언트를 빌드
         youtube = build('youtube', 'v3', developerKey=API_KEY2)

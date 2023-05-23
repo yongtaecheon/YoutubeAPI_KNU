@@ -22,3 +22,18 @@ class ChannelInfo(models.Model):
 class CredentialsModel(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     credentials = models.TextField()
+    
+class AnalyticsInfo(models.Model):
+    channel_id = models.TextField(max_length=1000)
+    date = models.DateTimeField(null = False)
+    views = models.BigIntegerField(null=True,default=0)
+    comments = models.BigIntegerField(null=True,default=0)
+    likes = models.BigIntegerField(null=True,default=0)
+    dislikes = models.BigIntegerField(null=True,default=0)
+    shares = models.BigIntegerField(null=True,default=0)
+    subscribersGained = models.BigIntegerField(null=True,default=0)
+    subscribersLost = models.BigIntegerField(null=True,default=0)
+    estimatedMinutesWatched =  models.BigIntegerField(null=True,default=0)
+    audienceWatchRatio = models.FloatField(null=True,default=0)
+    relativeRetentionPerformance = models.FloatField(null=True,default=0)
+    
