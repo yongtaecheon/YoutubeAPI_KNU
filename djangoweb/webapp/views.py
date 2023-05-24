@@ -23,7 +23,7 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Create your views here.
 
-CLIENT_SECRETS_FILE = "C:/Users/dnjsr/Desktop/Project/YoutubeAPI_KNU/djangoweb/webapp/client_secret_2.json"
+CLIENT_SECRETS_FILE = "/Users/cheon/YoutubeAPI/django_demo/djangoweb/client_secret_2.json"
 SCOPES = ["https://www.googleapis.com/auth/userinfo.profile",
           "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
           "https://www.googleapis.com/auth/yt-analytics.readonly",
@@ -41,7 +41,6 @@ API_KEY5 = 'AIzaSyB5nnPCXwDu3BWpCQxcrpa8mdJYqBZANjQ'
 Categoryid = {'1': "애니메이션", '2': "자동차", '10': "음악", '15': "동물", '17': "스포츠", '20': "게임",
               '22': "블로그", '23': "코미디", '24': "엔터테인먼트", '25': "뉴스_정치", '26': "스타일", '27': "교육", '28': "과학_기술", '30': "영화"}
 
-
 def home(request):
     return render(request, 'cover/index.html')
 
@@ -53,135 +52,11 @@ def main(request):
 def dashboard(request):
     return render(request, 'dashboard/index.html')
 
-
-# def searchchannel_old(request):
-#     if request.method == 'POST':
-#         chnl = ChannelInfo()
-#         chnl.channel_name = request.POST['channel_name']
-
-#         # YouTube API 클라이언트를 빌드
-#         youtube = build('youtube', 'v3', developerKey=API_KEY2)
-
-#         # search API 채널 이름으로 채널 id 가져오기
-#         search_response = youtube.search().list(
-#             q=chnl.channel_name,
-#             type="channel",
-#             part="id",
-#         ).execute()
-#         chnl.channelID = search_response['items'][0]['id']['channelId']
-
-#         # 채널 통계를 가져옵니다.
-#         channels_response = youtube.channels().list(
-#             part='snippet,contentDetails,statistics',
-#             id=chnl.channelID
-#         ).execute()
-#         chnl.channel_name = channels_response['items'][0]['snippet']['title']
-#         chnl.views = int(
-#             channels_response['items'][0]['statistics']['viewCount'])
-#         chnl.subscribers = int(
-#             channels_response['items'][0]['statistics']['subscriberCount'])
-#         chnl.hidden_sub = int(
-#             channels_response['items'][0]['statistics']['hiddenSubscriberCount'])
-#         chnl.videos = int(
-#             channels_response['items'][0]['statistics']['videoCount'])
-#         chnl.channel_img = channels_response['items'][0]['snippet']['thumbnails']['high']['url']
-#         cpm = 17  # 1000 뷰당 예상 수익 ($2)
-#         chnl.revenue = round((chnl.views / 1000) * cpm)
-
-#         # search API로 채널 비디오 리스트 가져오기
-#         search_response = youtube.search().list(
-#             channelId=chnl.channelID,
-#             type="video",
-#             part="id",
-#             maxResults=50,  # 한 번에 최대 50개의 결과 가져오기
-#             order="date"
-#         ).execute()
-#         # 검색 결과에서 동영상 ID 추출
-#         video_ids = []
-#         for item in search_response["items"]:
-#             video_ids.append(item["id"]["videoId"])
-#         # # 검색 결과가 50개 이상일 경우, 다음 페이지에 대한 요청을 보내어 결과를 가져옴
-#         # while "nextPageToken" in search_response:
-#         #     search_response = youtube.search().list(
-#         #         channelId=chnl.channelID,
-#         #         type="video",
-#         #         part="id",
-#         #         maxResults=50,
-#         #         pageToken=search_response["nextPageToken"]
-#         #     ).execute()
-#         #     for item in search_response["items"]:
-#         #         video_ids.append(item["id"]["videoId"])
-#         # 비디오 정보 가져오기
-#         video_title = []
-#         video_url = []
-#         video_category_id = []
-#         video_views = []
-#         video_likes = []
-#         video_comments = []
-#         video_date = []
-#         video_embed = []
-#         for video_id in video_ids:
-#             video_response = youtube.videos().list(
-#                 part='snippet, statistics, player', id=video_id).execute()
-#             if video_response['items'] == []:
-#                 video_category_id.append('-')
-#                 video_views.append('-')
-#                 video_likes.append('-')
-#                 video_comments.append('-')
-#                 video_date.append('-')
-#             else:
-#                 video_title.append(
-#                     video_response['items'][0]['snippet']['title'])
-#                 video_url.append(
-#                     video_response['items'][0]['snippet']['thumbnails']['high']['url'])
-#                 video_category_id.append(
-#                     video_response['items'][0]['snippet']['categoryId'])
-#                 video_views.append(
-#                     video_response['items'][0]['statistics']['viewCount'])
-#                 video_likes.append(
-#                     video_response['items'][0]['statistics']['likeCount'])
-#                 try:
-#                     video_comments.append(video_response['items']
-#                                           [0]['statistics']['commentCount'])
-#                 except:
-#                     video_comments.append('댓글중지')
-#                 video_date.append(
-#                     video_response['items'][0]['snippet']['publishedAt'])
-#                 video_embed.append(
-#                     video_response['items'][0]['player']['embedHtml'])
-#         video_result = []
-#         video_result.append(video_title)
-#         video_result.append(video_url)
-#         video_result.append(video_category_id)
-#         video_result.append(video_views)
-#         video_result.append(video_likes)
-#         video_result.append(video_comments)
-#         video_result.append(video_date)
-#         # json 활용하여 textField 형태로 리스트들 저장
-#         chnl.video_title = json.dumps(video_title)
-#         chnl.video_url = json.dumps(video_url)
-#         chnl.video_category_id = json.dumps(video_category_id)
-#         chnl.video_views = json.dumps(video_views)
-#         chnl.video_likes = json.dumps(video_likes)
-#         chnl.video_comments = json.dumps(video_comments)
-#         chnl.video_date = json.dumps(video_date)
-#         # pandas dataframe 생성후 html로 변경, render context 인자로 넘겨줌
-#         df = pd.DataFrame([video_title, video_url, video_category_id,
-#                           video_views, video_likes, video_comments, video_date]).T
-#         df.columns = ['video_title', 'video_url', 'video_category_id',
-#                       'video_views', 'video_likes', 'video_comments', 'video_date']
-#         # for url in video_url:
-#         #     df.replace(url, '<img src='+url+'>', inplace=True)
-#             # df.loc[url, video_url] = '<img src='+url+'>'
-#         # df = df.sort_values(by=['조회 수','좋아요 수','댓글 수'], ascending=False)
-#         df_html = df.to_html(decimal=',', justify='center',
-#                              classes='table table-striped table-sm table-hover')
-#         now = datetime.now()
-#         chnl.LoadDate = now.strftime('%Y%m%d')
-#         chnl.save()
-#     return render(request, 'dashboard/index.html', context={'chnl': chnl, 'df_html': df_html, 'video_embed':video_embed ,'video_result':video_result, 'df':df})
-
 def api_request(request):
+    choose_date = 30
+    if request.method == 'POST':
+        choose_date = int(request.POST.get('choose_date', ''))
+
     #세션에 credentials 정보가 없다면 authorize로 이동하여 생성
     if 'credentials' not in request.session:
         return redirect('authorize')
@@ -193,62 +68,67 @@ def api_request(request):
     #유튜브 객체 생성
     youtube = googleapiclient.discovery.build(
         ANALYTICS_API, ANALYTICS_VERSION, credentials=credentials)
+    
+    #현재시간
+    now = datetime.now()
+    # 최근 한달 -> 현재 - 30일
+    startday = (now + timedelta(days=-choose_date)).strftime('%Y-%m-%d') 
+    today = now.strftime('%Y-%m-%d')
 
     #조회수 구독 유무
-    report = youtube.reports().query(
+    analytics_viewsub = youtube.reports().query(
         ids='channel==MINE',
         metrics='views',
         dimensions='subscribedStatus',
-        startDate='2020-05-01',
-        endDate='2020-05-10',
+        startDate= startday,
+        endDate= today,
     ).execute()
-    
-    #DB저장
-    AnalyticsData=AnalyticsInfo()
-    data_row = report["rows"]
-    print(float(data_row[1][1]) / float(data_row[0][1]))
-    AnalyticsData.subscribersViewsRatio =  float(data_row[1][1]) / float(data_row[0][1])
+    data_row = analytics_viewsub["rows"]
+    Analytics_ViewSub_Ratio =round(float(data_row[1][1]) / float(data_row[0][1]) * 100,2)
 
     #쿼리
-    report = youtube.reports().query(
+    analytics = youtube.reports().query(
         ids='channel==MINE',
-        startDate='2020-05-01',
-        endDate='2020-05-02',
+        startDate=startday,
+        endDate= today,
         metrics='views,comments,likes,dislikes,shares,subscribersGained,subscribersLost,estimatedMinutesWatched',
         dimensions='day',
         sort='day'
     ).execute()
 
-    #DB 저장
-    data_row = report["rows"]
+    chnlID = get_my_Channel(request)
+    analytics_result = []
     
+    #리스트 저장
+    data_row = analytics["rows"]
     for row in data_row:
-        AnalyticsData.channel_id = get_my_Channel(request)
-        AnalyticsData.date = row[0]
-        AnalyticsData.views = row[1]
-        AnalyticsData.comments = row[2]
-        AnalyticsData.likes = row[3]
-        AnalyticsData.dislikes = row[4]
-        AnalyticsData.shares =row[5]
-        AnalyticsData.subscribersGained=row[6]
-        AnalyticsData.subscribersLost=row[7]
-        AnalyticsData.estimatedMinutesWatched=row[8]
-        AnalyticsData.save()
+        AnalyticsData = []
+        yymmdd = (row[0].replace('-','')).replace('20','',1)
+        AnalyticsData.append(yymmdd) #date
+        AnalyticsData.append(row[1]) #views
+        AnalyticsData.append(row[2]) #comments
+        AnalyticsData.append(row[3]) #likes
+        AnalyticsData.append(row[4]) #dislikes
+        AnalyticsData.append(row[5]) #shares
+        AnalyticsData.append(row[6]) #subsGained
+        AnalyticsData.append(row[7]) #subsLost
+        AnalyticsData.append(row[8]) #estMinWatched
+        analytics_result.append(AnalyticsData)
     
-    # #비디오 진행도에 따른 시청자 유지 능력 측정
-    # report = youtube.reports().query(
-    #     dimensions="elapsedVideoTimeRatio",
-    #     endDate="2022-06-30",
-    #     filters="video==KbQCYTLgLGM;audienceType==ORGANIC",
-    #     ids="channel==MINE",
-    #     metrics="audienceWatchRatio,relativeRetentionPerformance",
-    #     startDate="2022-01-01"
-    # ).execute()
+    #비디오 진행도에 따른 시청자 유지 능력 측정
+    retention_perf = youtube.reports().query(
+        dimensions="elapsedVideoTimeRatio",
+        endDate=today,
+        filters="video==KbQCYTLgLGM;audienceType==ORGANIC",
+        ids="channel==MINE",
+        metrics="audienceWatchRatio,relativeRetentionPerformance",
+        startDate=startday
+    ).execute()
     
     # 세션에 credential 정보 저장
     request.session['credentials'] = credentials_to_dict(credentials)
 
-    return JsonResponse(report)
+    return render(request,"analytics/index.html", context={'choose_date':round(choose_date/30), 'chnlID': chnlID, 'viewsub_ratio': Analytics_ViewSub_Ratio, 'analytics': analytics_result, 'retention_perf':retention_perf})
 
 #Google 인증 받기
 def authorize(request):
@@ -310,7 +190,7 @@ def revoke(request):
 def clear_credentials(request):
     if 'credentials' in request.session:
         del request.session['credentials']
-    return render(request,"test/cleared.html")
+    return render(request,"jumbotron/index.html")
 
 #인증서 내용 딕셔너리로 변환
 def credentials_to_dict(credentials):
