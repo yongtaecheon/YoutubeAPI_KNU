@@ -125,7 +125,7 @@
                   list-style-type: none;
                 }
               </style>
-              <ul class="nav justify-content-center">
+              <!-- <ul class="nav justify-content-center">
                 <li class="nav-item">
                   <a class="nav-link" href="{%url 'showTrendList' 1%}">1</a>
                 </li>
@@ -156,29 +156,8 @@
                 <li class="nav-item">
                    <a class="nav-link" href="{%url 'showTrendList' 10%}">10</a>
                 </li>
-              </ul>
+              </ul> -->
               <h1>Trend List</h1>
-              이전 인기 카테고리 확인
-              <form id="myForm" method="post" action="/showTrendData/">
-                {% csrf_token %}
-                <select name="param" id="selectParam">
-                  {% for day in dl %}
-                    <option value="{{ day.LoadDate }}">{{ day.LoadDate }}</option>
-                  {% endfor %}
-                </select>
-                <input type="submit" value="제출" onclick="submitForm(event)">
-              </form>
-
-              <script>
-                function submitForm(event) {
-                  event.preventDefault(); // 기본 제출 동작 막기
-                  var selectElement = document.getElementById("selectParam");
-                  var selectedValue = selectElement.value;
-              
-                  document.getElementById("myForm").submit();
-                }
-              </script>
-              
               <ul>
               {% for item in tl %}
                 <li class="trend-item">

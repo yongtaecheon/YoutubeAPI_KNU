@@ -125,38 +125,6 @@
                   list-style-type: none;
                 }
               </style>
-              <ul class="nav justify-content-center">
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 1%}">1</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 2%}">2</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 3%}">3</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showTrendList' 4%}">4</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 5%}">5</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 6%}">6</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 7%}">7</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showTrendList' 8%}">8</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 9%}">9</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showTrendList' 10%}">10</a>
-                </li>
-              </ul>
               <h1>Trend List</h1>
               이전 인기 카테고리 확인
               <form id="myForm" method="post" action="/showTrendData/">
@@ -168,24 +136,13 @@
                 </select>
                 <input type="submit" value="제출" onclick="submitForm(event)">
               </form>
-
-              <script>
-                function submitForm(event) {
-                  event.preventDefault(); // 기본 제출 동작 막기
-                  var selectElement = document.getElementById("selectParam");
-                  var selectedValue = selectElement.value;
-              
-                  document.getElementById("myForm").submit();
-                }
-              </script>
-              
               <ul>
               {% for item in tl %}
                 <li class="trend-item">
-                  <h3>{{ item.title }}</h3>
-                  <p><strong>Channel:</strong> {{ item.channel_title }}</p>
-                  <p><strong>Views:</strong> {{ item.views }}</p>
-                  <a href="{{ item.url }}">Watch now</a>
+                  <h3>{{ item.category_name }}</h3>
+                  <!-- <p><strong>Channel:</strong> {{ item.category }}</p> -->
+                  <p><strong>videos:</strong> {{ item.count }}</p>
+                  <a href="{% url 'showData' date item.category_name %}">Show</a>
                 </li>
               {% endfor %}
               </ul>

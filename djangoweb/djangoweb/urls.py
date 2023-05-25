@@ -26,5 +26,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('updateDB/', webapp.views.updateDB, name='updateDB'),
     path('showTrendList/<int:param>/',webapp.views.showTrendList, name='showTrendList'),
-    path('showCategoryPopChannel/<int:param>/',webapp.views.showCategoryPopChannel, name='showCategoryPopChannel')
+    path('showCategoryPopChannel/<int:param>/',webapp.views.showCategoryPopChannel, name='showCategoryPopChannel'),
+    path('showTrendData/', webapp.views.showTrendData, name ='showTrendData'),
+    path('showData/<int:param1>/<str:param2>/', webapp.views.showData, name="showData"),
     ]

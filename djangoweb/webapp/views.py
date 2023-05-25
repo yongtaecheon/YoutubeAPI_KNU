@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
-from .models import ChannelInfo, PopularChannelInfo, TrendList
+from .models import ChannelInfo, PopularChannelInfo, TrendList, Category
+from django.db.models import Count
 
 import os
 import re
@@ -165,6 +166,7 @@ def makeTrendList():
         maxResults=50
     )
 
+    
     # API 요청을 실행하고 응답을 받아옵니다.
     response = req.execute()
     now = datetime.now()
@@ -173,15 +175,31 @@ def makeTrendList():
         tl = TrendList()
         tl.title = item['snippet']['title']
         tl.channel_title = item['snippet']['channelTitle']
+        tl.category_name =  Category.objects.get(category_id = item['snippet']['categoryId']).category_name
         tl.views = item['statistics']['viewCount']
         tl.video_id = item['id']
         tl.url = f'https://www.youtube.com/watch?v={tl.video_id}'
         tl.LoadDate = now.strftime('%Y%m%d')
         tl.save()
-    return
+
+    # 기존에 생성되어 있는 데이터베이스에 카테고리 이름 추가
+    # for v in TrendList.objects.all():
+    #     request = youtube.videos().list(
+    #         part="snippet",
+    #         id=v.video_id
+    #     )
+    #     response = request.execute()
+
+    #     video = response['items'][0]
+    #     v.category_name = Category.objects.get(category_id = video['snippet']['categoryId']).category_name
+    #     v.save()
+
+    return None
 
 
 def showTrendList(request, param):
+    dayList = TrendList.objects.values('LoadDate').distinct()
+
     all_videos = TrendList.objects.all()
 
     tlList = []
@@ -189,7 +207,7 @@ def showTrendList(request, param):
     for index in range((int(param)-1)*10, int(param)*10-1):
         tlList.append(all_videos[index])
 
-    return render(request, 'trendList/showTrendList.html', context={'tl': tlList})
+    return render(request, 'trendList/showTrendList.html', context={'tl': tlList, 'dl': dayList})
 
 
 def objectcreation():
@@ -271,6 +289,21 @@ def showCategoryPopChannel(request, param):
         pop_chnllist.append(all_chnls[index])
     return render(request, 'category/index.html', context={'pop_chnllist': pop_chnllist})
 
+def showTrendData(request):
+    dayList = TrendList.objects.values('LoadDate').distinct()
+    if request.method == 'POST':
+        param = request.POST.get('param')
+        videosList = TrendList.objects.filter(LoadDate = param).values('category_name').annotate(count=Count('category_name')).order_by('-count')[:10]
+
+        return render(request, 'trendList/showTrendData.html', context={'date': param, 'tl': videosList, 'dl': dayList})
+    else:
+        return render(request, 'cover/index.html')
+
+
+def showData(request, param1, param2):
+    videosList = TrendList.objects.filter(LoadDate = param1, category_name = param2)
+    
+    return render(request, 'trendList/showData.html', context={'tl': videosList})
 
 def updateDB(request):
     makeTrendList()
