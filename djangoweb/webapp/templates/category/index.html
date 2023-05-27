@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+{% load i18n %}
+{%load static %}
+{% load account socialaccount %}
+{% providers_media_js %}
+{% get_providers as socialaccount_providers %}
+{% block content %}
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -9,35 +15,33 @@
       content="Mark Otto, Jacob Thornton, and Bootstrap contributors"
     />
     <meta name="generator" content="Hugo 0.108.0" />
-    <title>Jumbotron example · Bootstrap v5.3</title>
+    <title>Youtuber Analyzer - Category Trend List</title>
 
     <link
       rel="canonical"
-      href="https://getbootstrap.com/docs/5.3/examples/jumbotron/"
+      href="https://getbootstrap.com/docs/5.3/examples/dashboard/"
     />
-
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.min.js"
+      integrity="sha384-heAjqF+bCxXpCWLa6Zhcp4fu20XoNIA98ecBC1YkdXhszjoejr5y9Q77hIrv8R9i"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/feather-icons@4.28.0/dist/feather.min.js"
+      integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"
+      integrity="sha384-zNy6FEbO50N+Cg5wap8IKA4M/ZnLJgzc6w2NqACZaK0u0FXfOWRRJOnQtpZun8ha"
+      crossorigin="anonymous"
+    ></script>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css"
       rel="stylesheet"
       integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp"
       crossorigin="anonymous"
     />
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
-      integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.min.js"
-      integrity="sha384-heAjqF+bCxXpCWLa6Zhcp4fu20XoNIA98ecBC1YkdXhszjoejr5y9Q77hIrv8R9i"
-      crossorigin="anonymous"
-    ></script>
-
     <style>
       .bd-placeholder-img {
         font-size: 1.125rem;
@@ -90,103 +94,323 @@
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
       }
+      
+      .channel-title {
+        display:block;
+        white-space:nowrap;
+        text-overflow:ellipsis;
+        overflow:hidden;
+      }
     </style>
+    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   </head>
   <body>
-    <main>
-      <div class="container py-4">
-        <header class="pb-3 mb-4 border-bottom">
-          <a
-            href="/"
-            class="d-flex align-items-center text-dark text-decoration-none"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="40"
-              height="32"
-              class="me-2"
-              viewBox="0 0 118 94"
-              role="img"
-            >
-              <title>Bootstrap</title>
-              {% comment %} <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M24.509 0c-6.733 0-11.715 5.893-11.492 12.284.214 6.14-.064 14.092-2.066 20.577C8.943 39.365 5.547 43.485 0 44.014v5.972c5.547.529 8.943 4.649 10.951 11.153 2.002 6.485 2.28 14.437 2.066 20.577C12.794 88.106 17.776 94 24.51 94H93.5c6.733 0 11.714-5.893 11.491-12.284-.214-6.14.064-14.092 2.066-20.577 2.009-6.504 5.396-10.624 10.943-11.153v-5.972c-5.547-.529-8.934-4.649-10.943-11.153-2.002-6.484-2.28-14.437-2.066-20.577C105.214 5.894 100.233 0 93.5 0H24.508zM80 57.863C80 66.663 73.436 72 62.543 72H44a2 2 0 01-2-2V24a2 2 0 012-2h18.437c9.083 0 15.044 4.92 15.044 12.474 0 5.302-4.01 10.049-9.119 10.88v.277C75.317 46.394 80 51.21 80 57.863zM60.521 28.34H49.948v14.934h8.905c6.884 0 10.68-2.772 10.68-7.727 0-4.643-3.264-7.207-9.012-7.207zM49.948 49.2v16.458H60.91c7.167 0 10.964-2.876 10.964-8.281 0-5.406-3.903-8.178-11.425-8.178H49.948z"
-                fill="currentColor"
-              ></path> {% endcomment %}
-            </svg>
-            <span class="fs-4"> <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-youtube" viewBox="0 0 16 14">
-        <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/>
-      </svg>Youtube Analyzer</span>
-          </a>
-        </header>
-
-        <body>
-            <style>
-                .category-item {
-                  border: 1px solid #ccc;
-                  padding: 10px;
-                  margin-bottom: 10px;
-                  list-style-type: none;
-                }
-              </style>
-              
-              <h1>Category List</h1>
-              <ul class="nav justify-content-center">
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showCategoryPopChannel' 1%}">1</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showCategoryPopChannel' 2%}">2</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showCategoryPopChannel' 3%}">3</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showCategoryPopChannel' 4%}">4</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showCategoryPopChannel' 5%}">5</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showCategoryPopChannel' 6%}">6</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showCategoryPopChannel' 7%}">7</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showCategoryPopChannel' 8%}">8</a>
-                </li>
-                  <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showCategoryPopChannel' 9%}">9</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showCategoryPopChannel' 10%}">10</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showCategoryPopChannel' 11%}">11</a>
-                </li>
-                <li class="nav-item">
-                   <a class="nav-link" href="{%url 'showCategoryPopChannel' 12%}">12</a>
-                </li>
-              </ul>
-              <ul>
-              {% for item in pop_chnllist %}
-                <li class="category-item">
-                  <h3>{{ item.channel_category }}</h3>
-                  <img src="{{item.channel_thumbnail}}" width="100">
-                  <p><strong>Channel:</strong> {{ item.channel_name }}</p>
-                  <p><strong>Views:</strong> {{ item.channel_views }}</p>
-                  <a href="https://www.youtube.com/channel/{{item.channelID}}">Watch now</a>
-                </li>
-              {% endfor %}
-              </ul>
-              
-        </body>
-        <footer class="pt-3 mt-4 text-muted border-top">&copy; 2022</footer>
+    <header
+      class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow"
+    >
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6" href="/"
+        >Youtube Analyzer</a
+      >
+      <button
+        class="navbar-toggler position-absolute d-md-none collapsed"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#sidebarMenu"
+        aria-controls="sidebarMenu"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <form class="w-100" action="{% url 'searchchannel' %}" method="POST">
+        {% csrf_token %}
+        <input
+          class="form-control form-control-dark w-100 rounded-0 border-0"
+          type="text"
+          placeholder="Search"
+          aria-label="Search"
+          name="channel_name"
+          id="channel_name"
+        />
+      </form>
+      <div class="navbar-nav">
+        <div class="nav-item text-nowrap">
+          {% if user.is_authenticated %}
+          <a class="nav-link px-3" href="/accounts/logout">Sign out</a>
+          {%endif%}
+        </div>
       </div>
-    </main>
+    </header>
+      <div class="container-fluid">
+        <div class="row">
+          <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3 sidebar-sticky">
+              <ul class="nav flex-column">
+                <li class="nav-item">
+                  <a class="nav-link" aria-current="page" href="/">
+                    <span data-feather="home" class="align-text-bottom"></span>
+                    Home
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link active" href="/showrankingchannel/1/">
+                    <span data-feather="bar-chart-2" class="align-text-bottom"></span>
+                    Ranking
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/showTrendList/1/">
+                    <span data-feather="layers" class="align-text-bottom"></span>
+                    Trend List
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/main">
+                    <span data-feather="youtube" class="align-text-bottom"></span>
+                    Channel Search
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/api_request">
+                    <span data-feather="user-plus" class="align-text-bottom"></span>
+                    Creater Studio
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </nav>
+          <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+              <h2>유튜브 채널 랭킹</h2>
+            </div>
+            <form class="mb-5" method = "post" align="center">
+              {% csrf_token %}
+              <div class="btn-group">
+                <button
+                  class="btn btn-outline-secondary" type="submit" name="button_clicked" value="Subscriber"
+                  >구독자 순위 보기
+                </button>
+                <button
+                  class="btn btn-outline-secondary" type="submit" name="button_clicked" value="ViewCount"
+                  >조회수 순위 보기
+                </button>
+                <div class="btn-group">
+                  <button type="submit" class="btn btn-outline-secondary">카테고리 별 순위 보기</button>
+                  <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="애니메이션" id="cat1" checked>
+                      <label class="form-check-label" for="cat1">
+                        <i class="bi bi-balloon"></i>
+                        애니메이션
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="자동차" id="cat2" checked>
+                      <label class="form-check-label" for="cat2">
+                        <i class="bi bi-car-front"></i>
+                        자동차
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="음악" id="cat3" checked>
+                      <label class="form-check-label" for="cat3">
+                        <i class="bi bi-music-note-beamed"></i>
+                        음악
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="동물" id="cat4" checked>
+                      <label class="form-check-label" for="cat4">
+                        <i class="bi bi-tencent-qq"></i>
+                        동물
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="스포츠" id="cat5" checked>
+                      <label class="form-check-label" for="cat5">
+                        <i class="bi bi-bicycle"></i>
+                        스포츠
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="게임" id="cat6" checked>
+                      <label class="form-check-label" for="cat6">
+                        <i class="bi bi-joystick"></i>
+                        게임
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="블로그" id="cat7" checked>
+                      <label class="form-check-label" for="cat7">
+                        <i class="bi bi-person-badge"></i>
+                        블로그
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="코미디" id="cat8" checked>
+                      <label class="form-check-label" for="cat8">
+                        <i class="bi bi-emoji-laughing"></i>
+                        코미디
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="엔터테인먼트" id="cat3" checked>
+                      <label class="form-check-label" for="cat3">
+                        <i class="bi bi-star"></i>
+                        엔터테인먼트
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="뉴스_정치" id="cat9" checked>
+                      <label class="form-check-label" for="cat9">
+                        <i class="bi bi-newspaper"></i>
+                        뉴스, 정치
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="스타일" id="cat10" checked>
+                      <label class="form-check-label" for="cat10">
+                        <i class="bi bi-scissors"></i>
+                        스타일
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="교육" id="cat11" checked>
+                      <label class="form-check-label" for="cat11">
+                        <i class="bi bi-book"></i>
+                        교육
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="과학_기술" id="cat12" checked>
+                      <label class="form-check-label" for="cat12">
+                        <i class="bi bi-radioactive"></i>
+                        과학, 기술
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="영화" id="cat13" checked>
+                      <label class="form-check-label" for="cat13">
+                        <i class="bi bi-camera-reels"></i>
+                        영화
+                      </label>
+                    </li>
+                    <li class="dropdown-item">
+                      <input class="form-check-input me-2" type="radio" name="category" value="없음" id="cat14" checked>
+                      <label class="form-check-label" for="cat14">
+                        <i class="bi bi-camera-reels"></i>
+                        선택없음
+                      </label>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </form>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-5">
+              {% for item in pop_chnllist %}
+                <div class="col">
+                  <div class="card shadow-sm">
+                    <img class="bd-placeholder-img card-img-top" width="100%" height="225" src="{{item.channel_thumbnail}}"></img>
+                    <div class="card-body">
+                      <p class="card-text">
+                        <h4 align="center" class="text-bg-dark">{{item.channel_category}}</h4>
+                        <h5 class="channel-title" align="center">{{ item.channel_name }}</h5>
+                        <strong>조회수:</strong> {{ item.channel_views }}<br>
+                        <strong>구독자 수:</strong> {{ item.subscribers }}<br>
+                        <strong>조회수 랭킹:</strong> {{ item.ranking_viewcounters }}<br>
+                        <strong>구독자 수 랭킹:</strong> {{ item.ranking_subscribers }}
+                      </p>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='https://www.youtube.com/channel/{{item.channelID}}'">Visit on Youtube</button>
+                        {% comment %} <small class="text-muted">게시일: {{ item.6 }}</small> {% endcomment %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {%endfor%}
+            </div>
+            <br>
+            <ul class="nav justify-content-center">
+              <li class="nav-item">
+                <a class="nav-link" href="{%url 'showrankingchannel' 1%}">1</a>
+              </li>
+              {% if indexcount >= 2 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 2%}">2</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 3 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 3%}">3</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 4 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 4%}">4</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 5 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 5%}">5</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 6 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 6%}">6</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 7 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 7%}">7</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 8 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 8%}">8</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 9 %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{%url 'showrankingchannel' 9%}">9</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 10 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 10%}">10</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 11 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 11%}">11</a>
+                </li>
+              {% endif %}
+              {% if indexcount >= 12 %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{%url 'showrankingchannel' 12%}">12</a>
+                </li>
+              {% endif %}
+            </ul>
+            <br>
+          </main>
+        </div>
+      </div>
+    <script src="{% static 'js/dashboard.js' %}"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+      integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3"
+      crossorigin="anonymous"
+    ></script>
+    
   </body>
 </html>
 
+{% endblock content %}
