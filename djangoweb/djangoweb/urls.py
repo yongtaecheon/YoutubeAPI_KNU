@@ -29,6 +29,7 @@ urlpatterns = [
     # path('showCategoryPopChannel/<int:param>/',webapp.views.showCategoryPopChannel, name='showCategoryPopChannel'),
     path('showTrendData/', webapp.views.showTrendData, name ='showTrendData'),
     path('showData/<int:param1>/<str:param2>/', webapp.views.showData, name="showData"),
+    path('showTrendFlow/', webapp.views.showTrendFlow, name="showTrendFlow"),
     path('showrankingchannel/<int:param>/',
          webapp.views.showrankingchannel, name='showrankingchannel'),
     path('api_request/', webapp.views.api_request, name = 'api_request'),

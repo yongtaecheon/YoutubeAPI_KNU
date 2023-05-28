@@ -869,11 +869,27 @@ def showTrendData(request):
 
 def showData(request, param1, param2):
     
-    videosList = TrendList.objects.filter(LoadDate = param1, category_name = param2)
+    videoList = TrendList.objects.filter(LoadDate = param1, category_name = param2)
     dayList = TrendList.objects.values('LoadDate').distinct()
 
-    return render(request, 'trendList/showTrendList.html', context={'tl': videosList, 'dl':dayList, 'day': param1, 'category': param2})
+    return render(request, 'trendList/showTrendList.html', context={'tl': videoList, 'dl':dayList, 'day': param1, 'category': param2})
 
+def showTrendFlow(request):
+
+    dayList = TrendList.objects.values('LoadDate').distinct()
+
+    result = []
+    cnt = 0
+    for day in dayList:
+        result.append([])
+        result[cnt].append(day['LoadDate'])
+        videoList = TrendList.objects.filter(LoadDate = day['LoadDate']).values('category_name').annotate(count=Count('category_name')).order_by('-count')[:5]
+        print(videoList)
+        for video in videoList:
+            result[cnt].append(video['category_name'])
+        cnt += 1
+
+    return render(request, 'trendList/showTrendFlow.html', context={'result': result})
 
 def updateDB(request):
     makeTrendList()

@@ -199,8 +199,19 @@
                   <option value="{{ day.LoadDate }}">{{ day.LoadDate }}</option>
                 {% endfor %}
               </select>
-              <input type="submit" value="제출" onclick="submitForm(event)">
+              <input type="submit" value="보기" onclick="submitForm(event)">
             </form>
+            <style>
+              a.custom-link {
+                  color: rgba(0, 0, 0, 1);
+              }
+          
+              a.custom-link:hover {
+                  color: rgba(0, 0, 0, 0.15);
+                  text-decoration: none;
+              }
+            </style>
+            <a href="{% url 'showTrendFlow' %}" class = "custom-link">이전 인기 카테고리 전체 보기</a>
            
             <script>
               function submitForm(event) {
