@@ -26,7 +26,10 @@ SECRET_KEY = 'django-insecure-=6*6h($43z7x73_6c&2c2047=b9$on(q-84t2k-2^7h(_bga!r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1',
+                 'localhost',
+                 'youtubeapi-knu.iptime.org',
+                 '192.168.0.5']
 
 
 # Application definition
@@ -50,6 +53,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
 
     'widget_tweaks',
+    'sslserver'
 ]
 
 MIDDLEWARE = [

@@ -553,28 +553,28 @@ def makeTrendList():
     response = req.execute()
     now = datetime.now()
 
-    # for index, item in enumerate(response['items']):
-    #     tl = TrendList()
-    #     tl.title = item['snippet']['title']
-    #     tl.channel_title = item['snippet']['channelTitle']
-    #     tl.category_name = Categoryid[item['snippet']['categoryId']]
-    #     tl.views = item['statistics']['viewCount']
-    #     tl.video_id = item['id']
-    #     tl.url = f'https://www.youtube.com/watch?v={tl.video_id}'
-    #     tl.LoadDate = now.strftime('%Y%m%d')
-    #     tl.save()
+    for index, item in enumerate(response['items']):
+        tl = TrendList()
+        tl.title = item['snippet']['title']
+        tl.channel_title = item['snippet']['channelTitle']
+        tl.category_name = Categoryid[item['snippet']['categoryId']]
+        tl.views = item['statistics']['viewCount']
+        tl.video_id = item['id']
+        tl.url = f'https://www.youtube.com/watch?v={tl.video_id}'
+        tl.LoadDate = now.strftime('%Y%m%d')
+        tl.save()
 
     # 기존에 생성되어 있는 데이터베이스에 카테고리 이름 추가
-    for v in TrendList.objects.all():
-        request = youtube.videos().list(
-            part="snippet",
-            id=v.video_id
-        )
-        response = request.execute()
+    # for v in TrendList.objects.all():
+    #     request = youtube.videos().list(
+    #         part="snippet",
+    #         id=v.video_id
+    #     )
+    #     response = request.execute()
 
-        video = response['items'][0]
-        v.category_name = Categoryid[video['snippet']['categoryId']]
-        v.save()
+    #     video = response['items'][0]
+    #     v.category_name = Categoryid[video['snippet']['categoryId']]
+    #     v.save()
 
     return None
 
