@@ -121,40 +121,20 @@
         </header>
 
         
-        <h1> DB UPDATE 완료 </h1>
-
-        <!-- <div class="p-5 mb-4 bg-light rounded-3">
-          <div class="container-fluid py-5">
-            <h1 class="display-5 fw-bold">유튜브 채널 검색하기</h1>
-            <p class="col-md-8 fs-4">
-              유튜브 채널명을 입력하여 채널의 통계정보를 검색해 보세요!
-            </p>
-            <form action="{% url 'searchchannel' %}" method="POST">
-              {% csrf_token %}
-              <div class="input-group mb-3">
-                <input
-                  type="text"
-                  class="form-control"
-                  placeholder="채널 이름 검색하기"
-                  aria-label="채널 이름"
-                  aria-describedby="button-addon2"
-                  name="channelID"
-                  id="channelID"
-                />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="submit"
-                  id="button-addon2">검색
-                </button>
-              </div>
-            </form>
+        <h1> DB UPDATE </h1>
+        <form class="mb-5" method = "post" align="center">
+          {% csrf_token %}
+          <div class="btn-group">
+            <button
+              class="btn btn-outline-secondary" type="submit" name="updatedb" value="trendlist"
+              >트렌드리스트 DB업데이트
+            </button>
+            <button
+              class="btn btn-outline-secondary" type="submit" name="updatedb" value="showranking"
+              >랭킹 채널 DB업데이트
+            </button> 
           </div>
-        </div> -->
-
-        
-
-        
-      
+        </form>
     </main>
   </body>
 </html>

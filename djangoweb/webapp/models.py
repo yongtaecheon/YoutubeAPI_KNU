@@ -27,6 +27,7 @@ class TrendList(models.Model):
     channel_title = models.CharField(null=True, default='', max_length=100)
     views = models.BigIntegerField(null=True, default=0)
     video_id = models.CharField(max_length=100)
+    category_name = models.CharField(null=True, default='', max_length=100)
     url = models.CharField(max_length=200)
     
 class PopularChannelInfo(models.Model):
@@ -39,7 +40,13 @@ class PopularChannelInfo(models.Model):
     channel_thumbnail = models.CharField(default='',max_length=100)
     ranking_subscribers = models.IntegerField(null=True,default=0)
     ranking_viewcounters = models.IntegerField(null=True,default=0)
-    
+
+class Category(models.Model):
+    category_id = models.IntegerField(null=True, default=0)
+    category_name = models.CharField(null=True, default='', max_length=100)
+    ranking_subscribers = models.IntegerField(null=True, default=0)
+    ranking_viewcounters = models.IntegerField(null=True, default=0)
+
 class AnalyticsInfo(models.Model):
     channel_id = models.TextField(max_length=1000)
     date = models.DateTimeField(null = False)

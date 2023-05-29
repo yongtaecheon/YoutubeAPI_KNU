@@ -189,85 +189,47 @@
           </nav>
           <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">            
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-              <h2>{{ day }} {{ category }} 유튜브 인기 트렌드 영상</h2>
+              <h2>유튜브 인기 트렌드 영상</h2>
             </div>
-            <div class="d-flex align-items-center pt-3 pb-2 mb-3">
-              <button class="btn btn-outline-secondary" type="submit" onclick="location.href='{% url 'showTrendFlow' %}'">이전 인기 카테고리 전체 보기</button>
-              <form id="myForm" method = "post" action="/showTrendData/">
-                {% csrf_token %}
-                <div class="btn-group">
-                  <button type="submit" class="btn btn-outline-secondary">이전 인기 카테고리 확인</button>
-                  <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                    <span class="visually-hidden">Toggle Dropdown</span>
-                  </button>
-                  <ul class="dropdown-menu">
-                    {% for day in dl %}
-                    <li class="dropdown-item">
-                      <input class="form-check-input me-2" type="radio" name="param" id="selectParam" value="{{day.LoadDate}}" id="cat1" checked>
-                      <label class="form-check-label" for="cat1">
-                        {{day.LoadDate}}
-                      </label>
-                    </li>
-                    {% endfor %}
-                  </ul>
-                </div>
-              </form>
-            </div>          
+           
+            <script>
+              function submitForm(event) {
+                event.preventDefault(); // 기본 제출 동작 막기
+                var selectElement = document.getElementById("selectParam");
+                var selectedValue = selectElement.value;
+            
+                document.getElementById("myForm").submit();
+              }
+            </script>
+           <style>
+            a.custom-link {
+                color: rgba(0, 0, 0, 1);
+                text-decoration: none;
+            }
+        
+            a.custom-link:hover {
+                color: rgba(0, 0, 0, 0.15);
+                text-decoration: none;
+            }
+            </style>
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-              {%for item in tl%}
+              {%for item in result%} 
                 <div class="col">
                   <div class="card shadow-sm">
-                    <iframe class="bd-placeholder-img card-img-top" width="100%" height="225" src="https://www.youtube.com/embed/{{item.video_id}}"></iframe>
                     <div class="card-body">
                       <p class="card-text">
-                        <h5 class="channel-title" align="center">{{ item.title }}</h5>
-                        <strong>채널명:</strong> {{ item.channel_title }}<br>
-                        <strong>조회수:</strong> {{ item.views }}<br>
+                        <h5 class="channel-title">{{ item.0 }} 인기 카테고리</h5>
+                        <ul class="list-group">{% for category in item|slice:"1:" %}
+                            <li class="list-group-item"><a href="{% url 'showData' item.0 category %}" class="custom-link">{{category}}</a></li>{% endfor %}
+                        </ul>
                       </p>
                       <div class="d-flex justify-content-between align-items-center">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="location.href='https://www.youtube.com/watch?v={{item.video_id}}'">Watch on Youtube</button>
-                        {% comment %} <small class="text-muted">게시일: {{ item.6 }}</small> {% endcomment %}
                       </div>
                     </div>
                   </div>
                 </div>
               {%endfor%}
             </div>
-            <br>
-            {% if not day %}
-            <ul class="nav justify-content-center">
-              <li class="nav-item">
-                <a class="nav-link" href="{%url 'showTrendList' 1%}">1</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{%url 'showTrendList' 2%}">2</a>
-              </li>
-                <li class="nav-item">
-                <a class="nav-link" href="{%url 'showTrendList' 3%}">3</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 4%}">4</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{%url 'showTrendList' 5%}">5</a>
-              </li>
-              {% comment %} <li class="nav-item">
-                <a class="nav-link" href="{%url 'showTrendList' 6%}">6</a>
-              </li>
-                <li class="nav-item">
-                <a class="nav-link" href="{%url 'showTrendList' 7%}">7</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 8%}">8</a>
-              </li>
-                <li class="nav-item">
-                <a class="nav-link" href="{%url 'showTrendList' 9%}">9</a>
-              </li>
-              <li class="nav-item">
-                  <a class="nav-link" href="{%url 'showTrendList' 10%}">10</a>
-              </li> {% endcomment %}
-            </ul>
-            {% endif %}
             <br>
           </main>
         </div>

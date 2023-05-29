@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
-from .models import ChannelInfo, PopularChannelInfo, TrendList, AnalyticsInfo
+from django.db.models import Count
+from .models import ChannelInfo, PopularChannelInfo, TrendList, AnalyticsInfo, Category
 
 from datetime import datetime, timedelta
 from googleapiclient.discovery import build
@@ -38,7 +39,7 @@ API_KEY3 = 'AIzaSyD1mS8iqeHOniuebnom3cFT_yVG1VI1odA'
 API_KEY4 = 'AIzaSyA2-DRryTN0JYnI3P-letj_bl-sj9wpVKw'
 API_KEY5 = 'AIzaSyB5nnPCXwDu3BWpCQxcrpa8mdJYqBZANjQ'
 
-Categoryid = {'1': "애니메이션", '2': "자동차", '10': "음악", '15': "동물", '17': "스포츠", '20': "게임",
+Categoryid = {'1': "애니메이션", '2': "자동차", '10': "음악", '15': "동물", '17': "스포츠", '19': "여행", '20': "게임",
               '22': "블로그", '23': "코미디", '24': "엔터테인먼트", '25': "뉴스_정치", '26': "스타일", '27': "교육", '28': "과학_기술", '30': "영화"}
 
 def home(request):
@@ -247,26 +248,51 @@ def time_to_seconds(time_str):
     # 'PT#M#S' 형식에서 분과 초를 추출하여 변환
     minutes = 0
     seconds = 0
+    hour = 0
+
+    if (time_str == 'P0D'):
+        return 0
 
     # 'M'과 'S' 사이에 있는 문자열 추출
-    time_components = time_str.split('T')[1].split('S')[0]
+    time_components = time_str.split('T')[1]
 
+    if 'H' in time_components:
+        hour = int(time_components.split('H')[0])
+        time_components = time_components.split('H')[1]
     # 'M'을 기준으로 분 추출
     if 'M' in time_components:
         minutes = int(time_components.split('M')[0])
-
+        time_components = time_components.split('M')[1]
     # 'S'를 기준으로 초 추출
     if 'S' in time_components:
         seconds = int(time_components.split('S')[0])
 
     # 분을 초로 변환
+    hour_to_seconds = hour*3600
     minutes_to_seconds = minutes * 60
 
     # 분과 초를 더하여 총 초로 반환
-    total_seconds = minutes_to_seconds + seconds
+    total_seconds = minutes_to_seconds + seconds + hour_to_seconds
 
     return total_seconds
 
+
+def is_months_ago(time_str):
+    # ?��?�� ?���? �??��?���?
+    current_time = datetime.now()
+
+    # 주어�? ?���? 문자?��?�� datetime 객체�? �??��
+    time_format = "%Y-%m-%dT%H:%M:%S%fZ"
+    given_time = datetime.strptime(time_str, time_format)
+
+    # ?��?�� ?��간에?�� 3개월 ?�� ?���? 계산
+    three_months_ago = current_time - timedelta(days=30)
+
+    # 주어�? ?��간이 3개월 ?��?��?���? ?��?��
+    if given_time > three_months_ago:
+        return True
+    else:
+        return False
 
 def searchchannel(request):
     chnl = ChannelInfo()
@@ -298,15 +324,15 @@ def searchchannel(request):
     chnl.videos = int(
         channels_response['items'][0]['statistics']['videoCount'])
     chnl.channel_img = channels_response['items'][0]['snippet']['thumbnails']['high']['url']
-    cpm = 17  # 1000 뷰당 예상 수익 ($2)
-    chnl.revenue = round((chnl.views / 1000) * cpm)
+    cpm = 2.52  # 1000 뷰당 예상 수익 ($2)
 
+    revenue_view = 0
     # search API로 채널 비디오 리스트 가져오기
     search_response = youtube.search().list(
         channelId=chnl.channelID,
         type="video",
         part="id",
-        maxResults=12,  # 한 번에 최대 12개의 결과 가져오기
+        maxResults=36,  # 한 번에 최대 12개의 결과 가져오기
         order="date"
     ).execute()
     # 검색 결과에서 동영상 ID 추출
@@ -324,6 +350,8 @@ def searchchannel(request):
     rating = [1, 1, 1, 1, 1]
     now = datetime.now()
     rated_video = []
+    shortsCount = 0
+    revenue_count = 0
 
     for item in search_response["items"]:
         video_ids.append(item["id"]["videoId"])
@@ -381,10 +409,19 @@ def searchchannel(request):
         )
         # 시간연산
         publish_date_str = video_response['items'][0]['snippet']['publishedAt']
-        if (is_three_months_ago(publish_date_str)):  # 조건 달것 3개월 이네
+        shorts = (time_to_seconds(
+            video_response['items'][0]['contentDetails']['duration']) < 61)
+        if (shorts):
+            shortsCount += 1
+        if (is_months_ago(publish_date_str) & ~shorts):
+            revenue_view += int(video_response['items']
+                                [0]['statistics']['viewCount'])
+            revenue_count += 1
+        if (is_three_months_ago(publish_date_str) & ~shorts):  # 조건 ?���? 3개월 ?��?��
             rated_video.append(len(video_title)-1)
         video_result.append(video_info)
 
+    chnl.revenue = round((revenue_view / 1000) * cpm)
     # 채널 평점
     # 구독자 수 1번
     if (len(rated_video)):
@@ -409,42 +446,42 @@ def searchchannel(request):
             like_per_subs += int(video_likes[sample])/chnl.subscribers
             # 100만 1700~ 5
             com_per_subs += int(video_likes[sample])/chnl.subscribers
-            views_per_subs /= len(rated_video)
-            like_per_subs /= len(rated_video)
-            com_per_subs /= len(rated_video)
+        views_per_subs /= len(rated_video)
+        like_per_subs /= len(rated_video)
+        com_per_subs /= len(rated_video)
 
-            # 구독자 대비 조회수
-            if (views_per_subs > 1):
-                vs_rate = 5
-            else:
-                alpha = views_per_subs
-                vs_rate = 1*(1-alpha) + 5*(alpha)
+        # 구독자 대비 조회수
+        if (views_per_subs > 1):
+            vs_rate = 5
+        else:
+            alpha = views_per_subs
+            vs_rate = 1*(1-alpha) + 5*(alpha)
 
             # 구독자 대비 좋아요  100만당 1만
-            if (like_per_subs > 0.01):
-                ls_rate = 5
-            else:
-                alpha = like_per_subs/0.01
-                ls_rate = 1*(1-alpha) + 5*(alpha)
+        if (like_per_subs > 0.01):
+            ls_rate = 5
+        else:
+            alpha = like_per_subs/0.01
+            ls_rate = 1*(1-alpha) + 5*(alpha)
 
             # 구독자 대비 댓글 100만당 1700개
-            if (com_per_subs > 0.0017):
-                cs_rate = 5
-            else:
-                alpha = com_per_subs/0.0017
-                cs_rate = 1*(1-alpha) + 5*(alpha)
+        if (com_per_subs > 0.0017):
+            cs_rate = 5
+        else:
+            alpha = com_per_subs/0.0017
+            cs_rate = 1*(1-alpha) + 5*(alpha)
 
             # 합산
-            rating[1] = vs_rate * 0.6 + ls_rate*0.2 + cs_rate * 0.2
+        rating[1] = vs_rate * 0.6 + ls_rate*0.2 + cs_rate * 0.2
 
         # 영상 주기 3번
         # print("영상개수")
         # print(len(rated_video))
         # print("\n")
-        if (len(rated_video) > 72):
-            rating[3] = 5
+        if (len(rated_video) > 36-shortsCount):
+            rating[2] = 5
         else:
-            alpha = len(rated_video)/72
+            alpha = len(rated_video)/(36-shortsCount)
             rating[2] = 1*(1-alpha) + 5*alpha
 
         # 영상 평균 조회수 4번
@@ -452,8 +489,10 @@ def searchchannel(request):
         for sample in rated_video:
             avg_view += int(video_views[sample])
         avg_view = avg_view/len(rated_video)
+        print('조회수')
+        print(avg_view)
         if (avg_view > 500000):
-            rating[4] = 5
+            rating[3] = 5
         elif (avg_view >= 10000):
             alpha = avg_view/500000
             rating[3] = 1*(1-alpha) + 5*alpha
@@ -468,10 +507,10 @@ def searchchannel(request):
         avg_duration /= len(rated_video)
         # print("평균 시간")
         # print(avg_duration)
-        if (avg_duration > 1200):
+        if (avg_duration > 900):
             rating[4] = 5
-        elif (avg_duration > 480):
-            alpha = avg_duration/1200
+        elif (avg_duration > 300):
+            alpha = avg_duration/900
             rating[4] = 1*(1-alpha) + 5*alpha
         else:
             rating[4] = 1
@@ -483,7 +522,12 @@ def searchchannel(request):
     now = datetime.now()
     chnl.LoadDate = now.strftime('%Y%m%d')
     chnl.save()
-    return render(request, 'dashboard/index.html', context={'chnl': chnl, 'video_result': video_result, 'rating': rating})
+
+    # 최근 한달
+    startday = (now + timedelta(days=-30)).strftime('%Y-%m-%d')
+    today = now.strftime('%Y-%m-%d')
+
+    return render(request, 'dashboard/index.html', context={'chnl': chnl, 'video_result': video_result, 'rating': rating, 'startday':startday, 'today':today})
 
 
 def makeTrendList():
@@ -509,27 +553,48 @@ def makeTrendList():
     response = req.execute()
     now = datetime.now()
 
-    for index, item in enumerate(response['items']):
-        tl = TrendList()
-        tl.title = item['snippet']['title']
-        tl.channel_title = item['snippet']['channelTitle']
-        tl.views = item['statistics']['viewCount']
-        tl.video_id = item['id']
-        tl.url = f'https://www.youtube.com/watch?v={tl.video_id}'
-        tl.LoadDate = now.strftime('%Y%m%d')
-        tl.save()
-    return
+    # for index, item in enumerate(response['items']):
+    #     tl = TrendList()
+    #     tl.title = item['snippet']['title']
+    #     tl.channel_title = item['snippet']['channelTitle']
+    #     tl.category_name = Categoryid[item['snippet']['categoryId']]
+    #     tl.views = item['statistics']['viewCount']
+    #     tl.video_id = item['id']
+    #     tl.url = f'https://www.youtube.com/watch?v={tl.video_id}'
+    #     tl.LoadDate = now.strftime('%Y%m%d')
+    #     tl.save()
+
+    # 기존에 생성되어 있는 데이터베이스에 카테고리 이름 추가
+    for v in TrendList.objects.all():
+        request = youtube.videos().list(
+            part="snippet",
+            id=v.video_id
+        )
+        response = request.execute()
+
+        video = response['items'][0]
+        v.category_name = Categoryid[video['snippet']['categoryId']]
+        v.save()
+
+    return None
 
 
 def showTrendList(request, param):
-    all_videos = TrendList.objects.all()
+    dayList = TrendList.objects.values('LoadDate').distinct()
+    
+    now = datetime.now()
+    date = now.strftime('%Y%m%d')
+    all_videos = TrendList.objects.filter(LoadDate=date)
 
     tlList = []
+    k = 12
+    if param==5:
+        k = 2
 
-    for index in range((int(param)-1)*12, int(param)*12):
+    for index in range((int(param)-1)*k, int(param)*k):
         tlList.append(all_videos[index])
 
-    return render(request, 'trendList/showTrendList.html', context={'tl': tlList})
+    return render(request, 'trendList/showTrendList.html', context={'tl': tlList, 'dl':dayList})
 
 
 def objectcreation():
@@ -840,7 +905,48 @@ def showrankingchannel(request, param):
         'pop_chnllist': pop_chnllist, 'indexcount': indexcount})
 
 
+def showTrendData(request):
+    dayList = TrendList.objects.values('LoadDate').distinct()
+    if request.method == 'POST':
+        param = request.POST.get('param')
+        videosList = TrendList.objects.filter(LoadDate=param).values(
+            'category_name').annotate(count=Count('category_name')).order_by('-count')[:10]
+        return render(request, 'trendList/showTrendData.html', context={'date': param, 'tl': videosList, 'dl': dayList})
+    else:
+        return render(request, 'cover/index.html')
+
+
+def showData(request, param1, param2):
+
+    videoList = TrendList.objects.filter(LoadDate=param1, category_name=param2)
+    dayList = TrendList.objects.values('LoadDate').distinct()
+
+    return render(request, 'trendList/showTrendList.html', context={'tl': videoList, 'dl': dayList, 'day': param1, 'category': param2})
+
+
+def showTrendFlow(request):
+
+    dayList = TrendList.objects.values('LoadDate').distinct()
+
+    result = []
+    cnt = 0
+    for day in dayList:
+        result.append([])
+        result[cnt].append(day['LoadDate'])
+        videoList = TrendList.objects.filter(LoadDate=day['LoadDate']).values(
+            'category_name').annotate(count=Count('category_name')).order_by('-count')[:5]
+        print(videoList)
+        for video in videoList:
+            result[cnt].append(video['category_name'])
+        cnt += 1
+
+    return render(request, 'trendList/showTrendFlow.html', context={'result': result})
+
+
 def updateDB(request):
-    makeTrendList()
-    make_rankingchannel()
+    button_clicked = request.POST.get('updatedb', '')
+    if button_clicked == 'trendlist':
+        makeTrendList()
+    elif button_clicked == 'showranking':
+        make_rankingchannel()
     return render(request, 'update/index.html')

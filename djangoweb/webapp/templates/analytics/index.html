@@ -273,10 +273,10 @@
                     views.push({{item.1}});
                     comments.push({{item.2}});
                     likes.push({{item.3}});
-                    shares.push({{item.4}});
-                    subsGained.push({{item.5}});
-                    subsLost.push(-{{item.6}});
-                    estMinWatched.push({{item.7}});
+                    shares.push({{item.5}});
+                    subsGained.push({{item.6}});
+                    subsLost.push(-{{item.7}});
+                    estMinWatched.push({{item.8}});
                 {%endfor%}
                 const data_view = {
                     labels: dates,
@@ -337,7 +337,7 @@
                 const data_watch = {
                     labels: dates,
                     datasets: [{
-                        label: '예상 시청시간',
+                        label: '평균시청시간(분)',
                         data: estMinWatched,
                         fill: false,
                         borderWidth: 1,

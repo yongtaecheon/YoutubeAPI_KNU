@@ -138,10 +138,10 @@
         <div class="row align-items-md-stretch">
           <div class="col-md-4">
             <div class="h-100 p-5 bg-light border rounded-3">
-              <h2>카테고리별 인기 채널</h2>
+              <h2>인기 채널 랭킹</h2>
               <p>
-                유튜브의 카테고리 별 인기 채널들을 볼 수 있습니다.
-                각 카테고리에는 어떤 채널들이 인기 있는지 보고, 접해보세요!
+                유튜브의 인기 채널들의 랭킹을 볼 수 있습니다.<br>
+                카테고리 별로 인기채널을 볼 수도 있습니다!
               </p>
                 <button
                   class="btn btn-outline-secondary"
@@ -155,7 +155,7 @@
             <div class="h-100 p-5 bg-light border rounded-3">
               <h2>유튜브 인기 트렌드 영상</h2>
               <p>
-                현재 유튜브에는 어떤 영상들이 인기 있는지, 트렌드 리스트를 볼 수 있습니다.
+                현재 유튜브에는 어떤 영상들이 인기 있는지<br>트렌드 리스트를 볼 수 있습니다.
               </p>
                 <button class="btn btn-outline-secondary" type="button" onclick="location.href='{% url 'showTrendList' 1 %}'">
                   트렌트 리스트 보기
@@ -184,9 +184,9 @@
           </div>
           <footer class="pt-3 mt-4 text-muted border-top">&copy; 2023 경북대학교 종합설계프로젝트2 - 유튜브API분석 웹 어플리케이션</footer>
           <br>
-          <button class="btn btn-secondary btn-sm" type="button" onclick="location.href='{% url 'updateDB'%}'">
+          {% comment %} <button class="btn btn-secondary btn-sm" type="button" onclick="location.href='{% url 'updateDB'%}'">
             데이터베이스 업데이트하기
-          </button>
+          </button> {% endcomment %}
         </div>
     </main>
   </body>
